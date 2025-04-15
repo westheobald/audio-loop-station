@@ -1,0 +1,23 @@
+name: lint-and-format
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - name: install
+        run: npm install
+      - name: lint
+        run: npm run lint
+      - name: prettier
+        run: npm prettier --write .
