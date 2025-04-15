@@ -1,0 +1,85 @@
+import Queue from 'yocto-queue';
+
+export class AudioTrack {
+  id: number;
+  audioContext: AudioContext;
+  buffer: AudioBuffer | null;
+  gain: GainNode;
+  pan: PannerNode;
+  sourceQueue: Queue<AudioBufferSourceNode>;
+  intervalId: ReturnType<typeof setInterval> | null;
+  constructor(id: number, audioContext: AudioContext) {
+    this.id = id;
+    this.audioContext = audioContext;
+    this.buffer = null;
+    this.gain = audioContext.createGain();
+    this.pan = audioContext.createPanner();
+    this.gain.connect(this.pan);
+    this.pan.connect(audioContext.destination);
+    this.sourceQueue = new Queue();
+    this.intervalId = null;
+  }
+  updateBuffer(buffer: AudioBuffer) {
+    this.buffer = buffer;
+  }
+  createSourceNode() {
+    if (!this.buffer) throw Error(`No buffer found for track: ${this.id}`);
+    const source = this.audioContext.createBufferSource();
+    source.buffer = this.buffer;
+    source.connect(this.gain);
+    return source;
+  }
+  play(startTime: number, loopLength: number, nextLoopStart: number) {
+    this.scheduleSingle(startTime, nextLoopStart);
+    this.scheduleLoop(nextLoopStart, loopLength);
+  }
+  stop() {
+    const previousGain = this.gain.gain.value;
+    this.gain.gain.value = 0;
+    if (this.intervalId) clearInterval(this.intervalId);
+    for (const node of this.sourceQueue.drain()) node.disconnect();
+    this.intervalId = null;
+    this.gain.gain.value = previousGain;
+  }
+  scheduleLoop(startTime: number, loopLength: number) {
+    if (this.intervalId) {
+      throw Error(`Loop already in progress for track: ${this.id}`);
+    }
+
+    let nextLoopStart = startTime;
+    const loop = () => {
+      const source = this.createSourceNode();
+      source.start(nextLoopStart);
+      this.sourceQueue.enqueue(source);
+      nextLoopStart += loopLength;
+
+      source.addEventListener(
+        'ended',
+        () => this.removeFinishedSource(source),
+        { once: true },
+      );
+    };
+
+    loop();
+    loop(); // will stay one queued ahead of playback
+    this.intervalId = setInterval(loop, loopLength * 1000);
+  }
+  scheduleSingle(startTime: number, nextLoopStart: number) {
+    const source = this.createSourceNode();
+    if (!source.buffer) throw Error(`No buffer found for track: ${this.id}`);
+    const offset = source.buffer.duration - (nextLoopStart - startTime);
+    source.start(startTime, offset);
+    this.sourceQueue.enqueue(source);
+    source.addEventListener('ended', () => this.removeFinishedSource(source), {
+      once: true,
+    });
+  }
+  removeFinishedSource(source: AudioBufferSourceNode) {
+    const finishedSource = this.sourceQueue.dequeue();
+    if (finishedSource !== source) {
+      throw Error(
+        `Source queue error for track: ${this.id}. Dequeue source does not match.`,
+      );
+    }
+  }
+}
