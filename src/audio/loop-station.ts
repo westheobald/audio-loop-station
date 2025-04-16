@@ -1,69 +1,65 @@
-import { AudioTrack } from "./audio-track";
-import { Metronome } from "./metronome";
+import { AudioTrack } from './audio-track';
+import LoopInfo from './loop-info';
+import { Metronome } from './metronome';
+import LooperState from './looper-state';
 
 export class LoopStation {
-  beatLength: number;
-  barLength: number;
-  loopLength: number;
   audioContext: AudioContext;
   inputStream: MediaStream;
+  loopInfo: LoopInfo;
   startTime: number;
   latency: number;
   metronome: Metronome;
   audioTracks: AudioTrack[];
-  isPlaying: boolean;
-  isRecording: boolean;
-  isMetronome: boolean;
-  isCountIn: boolean;
+  looperState: LooperState;
 
-  constructor(
-    audioContext: AudioContext,
-    inputStream: MediaStream,
-    bpm: number,
-    beatsPerBar: number,
-    numberOfBars: number,
-  ) {
-    this.beatLength = 1 / (bpm / 60);
-    this.barLength = this.beatLength * beatsPerBar;
-    this.loopLength = this.barLength * numberOfBars;
-
+  constructor(audioContext: AudioContext, inputStream: MediaStream) {
     this.audioContext = audioContext;
     this.inputStream = inputStream;
 
+    this.loopInfo = new LoopInfo({
+      bpm: 100,
+      beatsPerBar: 4,
+      numberOfBars: 2,
+      countInLength: 1,
+      sampleRate: audioContext.sampleRate,
+    });
+    this.metronome = new Metronome(audioContext, this.loopInfo);
+
+    this.latency = 0;
+    // this.latencyTrack = new AudioTrack(-1, audioContext);
+
+    this.audioTracks = new Array(4).map(
+      (_, i) => new AudioTrack(i + 1, audioContext),
+    );
     this.startTime = audioContext.currentTime;
 
-    this.latency = 0; // TODO: Set up latency
-
-    this.metronome = new Metronome(
-      -1,
-      audioContext,
-      this.beatLength,
-      this.barLength,
-      this.loopLength,
-    );
-    this.audioTracks = new Array(4).map(
-      (_, i) => new AudioTrack(i, audioContext),
-    );
-
-    this.isPlaying = false;
-    this.isRecording = false;
-    this.isMetronome = true;
-    this.isCountIn = true;
+    this.looperState = new LooperState({
+      isPlaying: false,
+      isRecording: 0,
+      isMetronome: true,
+      isCountIn: true,
+    });
   }
-  getNextLoop() {
-    // get next start time for loop
-  }
-  adjustSong(bpm: number, beatsPerBar: number, numberOfBars: number) {
-    this.beatLength = 1 / (bpm / 60);
-    this.barLength = this.beatLength * beatsPerBar;
-    this.loopLength = this.barLength * numberOfBars;
-    this.metronome = new Metronome(
-      -1,
-      this.audioContext,
-      this.beatLength,
-      this.barLength,
-      this.loopLength,
-    );
+  getNextLoop() {}
+  updateLooper(
+    bpm: number,
+    beatsPerBar: number,
+    numberOfBars: number,
+    countInLength: number,
+  ) {
+    const loopInfo = new LoopInfo({
+      bpm,
+      beatsPerBar,
+      numberOfBars,
+      countInLength,
+      sampleRate: this.audioContext.sampleRate,
+    });
+    const metronome = new Metronome(this.audioContext, loopInfo);
+    this.loopInfo = loopInfo;
+    this.metronome = metronome;
+    // NOTE: If implementing audio track tempo changes, alter playback speeds
+    // to match new loopInfo, otherwise delete audio tracks?
   }
   playAll() {}
   stopAll() {}

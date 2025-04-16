@@ -1,21 +1,30 @@
 import { AudioTrack } from './audio-track';
+import LoopInfo from './loop-info';
 
 export class Metronome extends AudioTrack {
-  countInLength: number;
+  countIn: (startTime: number) => void;
   constructor(
-    id: number,
     audioContext: AudioContext,
-    beatLength: number,
-    barLength: number,
-    loopLength: number,
+    { loopLength, beatLength, barLength, countInLength }: LoopInfo,
   ) {
-    super(id, audioContext);
+    super(0, audioContext);
     this.buffer = this.createMetronome(loopLength, beatLength);
-    this.countInLength = barLength;
+    this.countIn = (startTime: number) => {
+      const source = this.createSourceNode();
+      source.start(startTime, 0, barLength * countInLength);
+      this.sourceQueue.enqueue(source);
+      source.addEventListener(
+        'ended',
+        () => this.removeFinishedSource(source),
+        {
+          once: true,
+        },
+      );
+    };
   }
   createMetronome(loopLength: number, beatLength: number) {
     const sampleRate = this.audioContext.sampleRate;
-    const samples = loopLength * sampleRate;
+    const samples = Math.floor(loopLength * sampleRate);
     const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
     const channelData = buffer.getChannelData(0);
     const noiseSamples = 0.03 * sampleRate;
@@ -35,13 +44,5 @@ export class Metronome extends AudioTrack {
       }
     }
     return buffer;
-  }
-  countIn(startTime: number) {
-    const source = this.createSourceNode();
-    source.start(startTime, 0, this.countInLength);
-    this.sourceQueue.enqueue(source);
-    source.addEventListener('ended', () => this.removeFinishedSource(source), {
-      once: true,
-    });
   }
 }

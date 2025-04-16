@@ -67,7 +67,10 @@ export class AudioTrack {
   scheduleSingle(startTime: number, nextLoopStart: number) {
     const source = this.createSourceNode();
     if (!source.buffer) throw Error(`No buffer found for track: ${this.id}`);
-    const offset = source.buffer.duration - (nextLoopStart - startTime);
+    let offset = source.buffer.duration - (nextLoopStart - startTime);
+    if (offset < 0) offset = 0; // protect against floating point math
+
+    console.log(offset, source.buffer.duration, startTime, nextLoopStart);
     source.start(startTime, offset);
     this.sourceQueue.enqueue(source);
     source.addEventListener('ended', () => this.removeFinishedSource(source), {
