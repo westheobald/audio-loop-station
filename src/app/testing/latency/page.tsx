@@ -1,7 +1,7 @@
 'use client';
 import LatencyCorrection from '@/audio/latency-correction';
 import { LoopStation } from '@/audio/loop-station';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function LatencyTest() {
   const [loopStation, setLoopStation]: [
@@ -25,7 +25,7 @@ export default function LatencyTest() {
     <div>
       <button>Record</button>
       <button>Playback</button>
-      <div>Slider</div>
+      <div onChange={() => latencyTrack}>Slider</div>
     </div>
   );
 }
