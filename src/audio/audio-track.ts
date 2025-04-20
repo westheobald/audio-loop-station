@@ -3,7 +3,7 @@ import Queue from 'yocto-queue';
 export class AudioTrack {
   id: number;
   audioContext: AudioContext;
-  buffer: AudioBuffer | null;
+  buffer: AudioBuffer | undefined;
   gain: GainNode;
   pan: PannerNode;
   sourceQueue: Queue<AudioBufferSourceNode>;
@@ -11,7 +11,6 @@ export class AudioTrack {
   constructor(id: number, audioContext: AudioContext) {
     this.id = id;
     this.audioContext = audioContext;
-    this.buffer = null;
     this.gain = audioContext.createGain();
     this.pan = audioContext.createPanner();
     this.gain.connect(this.pan);
@@ -83,5 +82,28 @@ export class AudioTrack {
         `Source queue error for track: ${this.id}. Dequeue source does not match.`,
       );
     }
+  }
+  slice(offset: number, buffer?: AudioBuffer) {
+    if (!buffer && this.buffer) buffer = this.buffer;
+    if (!buffer) {
+      throw Error(`No audio buffer found to slice on track: ${this.id}`);
+    }
+
+    const data: Float32Array[] = [];
+    const sampleRate = this.audioContext.sampleRate;
+    const startSample = (offset / 1000) * sampleRate;
+    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+      const channelData = buffer.getChannelData(channel);
+      data.push(channelData.slice(startSample));
+    }
+    const newBuffer = this.audioContext.createBuffer(
+      buffer.numberOfChannels,
+      data[0].length,
+      sampleRate,
+    );
+    for (let channel = 0; channel < data.length; channel++) {
+      newBuffer.copyToChannel(data[channel], channel);
+    }
+    return newBuffer;
   }
 }

@@ -27,7 +27,6 @@ export class LoopStation {
     this.metronome = new Metronome(audioContext, this.loopInfo);
 
     this.latency = 0;
-    // this.latencyTrack = new AudioTrack(-1, audioContext);
 
     this.audioTracks = new Array(4).map(
       (_, i) => new AudioTrack(i + 1, audioContext),
