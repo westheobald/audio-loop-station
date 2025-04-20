@@ -59,7 +59,9 @@ export class LoopStation {
     this.loopInfo = loopInfo;
     this.metronome = metronome;
     // NOTE: If implementing audio track tempo changes, alter playback speeds
-    // to match new loopInfo, otherwise delete audio tracks?
+    // to match new loopInfo
+    // Otherwise make changes go on some kind of confirm that will delete the
+    // already recorder tracks
   }
   playAll() {}
   stopAll() {}

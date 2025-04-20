@@ -49,7 +49,7 @@ export default class LoopInfo {
     }
     if (num < min || num > max) {
       throw Error(
-        `${description} must be between ${min} and ${max} (revieve: ${num}).`,
+        `${description} must be between ${min} and ${max} (revieved: ${num}).`,
       );
     }
     return num;
