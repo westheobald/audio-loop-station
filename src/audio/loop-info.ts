@@ -1,5 +1,6 @@
 export default class LoopInfo {
   loopLength: number;
+  beatsPerBar: number;
   barLength: number;
   beatLength: number;
   countInLength: number;
@@ -16,6 +17,7 @@ export default class LoopInfo {
     countInLength: number;
     sampleRate: number;
   }) {
+    this.beatsPerBar = beatsPerBar;
     this.countInLength = this.validateNumber(
       countInLength,
       1,
