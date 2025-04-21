@@ -36,7 +36,7 @@ export class Metronome extends AudioTrack {
     for (
       let currentSample = 0, beat = 0;
       currentSample < samples;
-      currentSample++, beat = (beat + 1) % beatsPerBar
+      beat = (beat + 1) % beatsPerBar
     ) {
       for (let i = 0; i < noiseSamples && currentSample < samples; i++) {
         const freq = !beat ? accentFrequency : normalFrequency;
