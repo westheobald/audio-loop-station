@@ -1,14 +1,17 @@
 import { AudioTrack } from './audio-track';
 import LoopInfo from './loop-info';
 
+const accentFrequency = 700;
+const normalFrequency = 500;
+
 export class Metronome extends AudioTrack {
   countIn: (startTime: number) => void;
   constructor(
     audioContext: AudioContext,
-    { loopLength, beatLength, barLength, countInLength }: LoopInfo,
+    { loopLength, beatLength, barLength, countInLength, beatsPerBar }: LoopInfo,
   ) {
     super(0, audioContext);
-    this.buffer = this.createMetronome(loopLength, beatLength);
+    this.buffer = this.createMetronome(loopLength, beatLength, beatsPerBar);
     this.countIn = (startTime: number) => {
       const source = this.createSourceNode();
       source.start(startTime, 0, barLength * countInLength);
@@ -22,7 +25,7 @@ export class Metronome extends AudioTrack {
       );
     };
   }
-  createMetronome(loopLength: number, beatLength: number) {
+  createMetronome(loopLength: number, beatLength: number, beatsPerBar: number) {
     const sampleRate = this.audioContext.sampleRate;
     const samples = Math.floor(loopLength * sampleRate);
     const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
@@ -30,11 +33,15 @@ export class Metronome extends AudioTrack {
     const noiseSamples = 0.03 * sampleRate;
     const silenceSamples = (beatLength - 0.03) * sampleRate;
 
-    let currentSample = 0;
-    while (currentSample < samples) {
+    for (
+      let currentSample = 0, beat = 0;
+      currentSample < samples;
+      currentSample++, beat = (beat + 1) % beatsPerBar
+    ) {
       for (let i = 0; i < noiseSamples && currentSample < samples; i++) {
+        const freq = !beat ? accentFrequency : normalFrequency;
         channelData[currentSample] = Math.sin(
-          (2 * Math.PI * 500 * i) / sampleRate,
+          (2 * Math.PI * freq * i) / sampleRate,
         );
         currentSample++;
       }
