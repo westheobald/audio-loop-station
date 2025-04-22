@@ -2,7 +2,7 @@
 import { LoopStation } from '@/audio/loop-station';
 import { ChangeEvent, useState } from 'react';
 
-export default function LatencyTest() {
+export default function StoreAndLoadTest() {
   const [loopStation, setLoopStation]: [
     LoopStation | undefined,
     (loopStation: LoopStation) => void,
