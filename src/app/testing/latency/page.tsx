@@ -17,15 +17,53 @@ export default function LatencyTest() {
     const audioContxt = new AudioContext();
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
       setLoopStation(new LoopStation(audioContxt, stream));
-      setLatencyTrack(new LatencyCorrection(-1, audioContxt));
+      setLatencyTrack(new LatencyCorrection(-1, audioContxt, stream));
     });
   }
-  if (!loopStation) return <button onClick={init}>Start</button>;
+  if (!loopStation || !latencyTrack)
+    return <button onClick={init}>Start</button>;
   return (
     <div>
-      <button>Record</button>
-      <button>Playback</button>
-      <div onChange={() => latencyTrack}>Slider</div>
+      <button
+        onClick={() => {
+          loopStation.recordTrack(latencyTrack);
+        }}
+      >
+        Record
+      </button>
+      <button
+        onClick={() => {
+          loopStation.stopTrack(latencyTrack);
+          loopStation.metronome.stop();
+          loopStation.isRunning = false;
+        }}
+      >
+        Stop
+      </button>
+      Latency
+      <input
+        type='number'
+        min='0'
+        max='1000'
+        step={10}
+        defaultValue={0}
+        onChange={(e) => {
+          if (!latencyTrack.originalBuffer) return;
+          const newBuffer = latencyTrack.sliceOriginal(
+            +e.target.value / 1000,
+            loopStation.loopInfo.loopLength,
+          );
+          latencyTrack.stop();
+          latencyTrack.buffer = newBuffer;
+          latencyTrack.play(
+            loopStation.audioContext.currentTime,
+            loopStation.loopInfo.loopLength,
+            loopStation.getNextLoopStart(),
+          );
+          loopStation.latency = +e.target.value;
+          console.log(loopStation);
+        }}
+      />
     </div>
   );
 }
