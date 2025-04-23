@@ -66,16 +66,11 @@ export class AudioTrack {
       recorder.addEventListener('dataavailable', async (ev) => {
         const array = await ev.data.arrayBuffer();
         const audio = await this.audioContext.decodeAudioData(array);
-        console.log(audio);
-        console.log(
-          `Recording finished. Wait Time: ${waitTime}, LoopLength: ${loopLength}, Latency: ${latency}`,
-        );
         const newBuffer = this.slice(
           waitTime + latency / 1000,
           loopLength,
           audio,
         );
-        console.log(newBuffer);
         this.buffer = newBuffer;
         res(newBuffer);
       });

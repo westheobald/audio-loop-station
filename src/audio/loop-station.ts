@@ -79,11 +79,7 @@ export class LoopStation {
   start() {
     this.startTime = this.audioContext.currentTime;
     if (this.isCountIn) this.startTime = this.metronome.countIn(this.startTime);
-    this.metronome.play(
-      this.startTime,
-      this.loopInfo.loopLength,
-      this.getNextLoopStart(),
-    );
+    this.metronome.scheduleLoop(this.startTime, this.loopInfo.loopLength);
     return this.startTime;
   }
   playAll() {
@@ -170,6 +166,11 @@ export class LoopStation {
       this.loopInfo.beatLength,
       this.loopInfo.beatsPerBar,
     );
+    // NOTE: Resets all audio tracks to empty buffer
+    // Currently keeps all other state settings the same
+    for (const audioTrack of this.audioTracks) {
+      audioTrack.buffer = undefined;
+    }
     for (const key in json.audioTracks) {
       const id = +key;
       const audioData = json.audioTracks[id];
