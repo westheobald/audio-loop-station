@@ -12,7 +12,7 @@ export default function GlobalSection() {
           {tempo.toFixed(0)}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {["Metro", "Reverse", "Oct", "Ext Clk"].map((label) => (
+          {["Metronome", "Stop / Play", "Pitch Change", "Reverse"].map((label) => (
             <button
               key={label}
               className="border rounded py-1 text-sm hover:bg-accent hover:text-black transition"
