@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import './globals.css';
+import TransportBar from "@/components/TransportBar";
+import MixerSection from "@/components/Mixer";
+import GlobalSection from "@/components/Global";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,10 +28,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} font-mono antialiased select-none`}
       >
-        {children}
+        <main className="bg-black text-white min-h-screen p-4 flex flex-col">
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-12 md:gap-4 flex-grow">
+            <div className="md:col-span-6">
+              <MixerSection />
+            </div>
+            {/* <HeaderStrip className="col-span-3" /> */}
+            <div className="md:col-span-3" >
+              <GlobalSection />
+            </div>
+          </div>
+          <TransportBar  />
+          {children}
+        </main>
       </body>
     </html>
   );
-}
+};
