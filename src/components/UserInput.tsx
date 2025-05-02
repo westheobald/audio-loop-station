@@ -8,8 +8,6 @@ export default function UserInput() {
     const [tempo, setTempo] = useState(120);
     const [beatsPerBar, setBeatsPerBar] = useState(4);
     const [numberOfBars, setNumberOfBars] = useState(2);
-    
-    const btnBase = "flex-1 py-3 mx-1 rounded-lg text-sm tracking-widest";
     return (
       <div className="flex flex-col gap-4 py-24">
         <div className="flex items-center justify-center gap-16 w-full">
