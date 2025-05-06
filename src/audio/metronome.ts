@@ -5,12 +5,13 @@ const accentFrequency = 700;
 const normalFrequency = 500;
 
 export class Metronome extends AudioTrack {
-  countIn: (startTime: number) => void;
+  countIn: (startTime: number) => number;
   constructor(
     audioContext: AudioContext,
+    inputStream: MediaStream,
     { loopLength, beatLength, barLength, countInLength, beatsPerBar }: LoopInfo,
   ) {
-    super(0, audioContext);
+    super(0, audioContext, inputStream);
     this.buffer = this.createMetronome(loopLength, beatLength, beatsPerBar);
     this.countIn = (startTime: number) => {
       const source = this.createSourceNode();
@@ -23,6 +24,7 @@ export class Metronome extends AudioTrack {
           once: true,
         },
       );
+      return startTime + barLength * countInLength;
     };
   }
   createMetronome(loopLength: number, beatLength: number, beatsPerBar: number) {
