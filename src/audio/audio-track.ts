@@ -6,7 +6,8 @@ export class AudioTrack {
   inputStream: MediaStream;
   buffer: AudioBuffer | undefined;
   gain: GainNode;
-  pan: PannerNode;
+  pan: StereoPannerNode;
+  pitch: number;
   sourceQueue: Queue<AudioBufferSourceNode>;
   intervalId: ReturnType<typeof setInterval> | null;
   constructor(
@@ -18,9 +19,10 @@ export class AudioTrack {
     this.audioContext = audioContext;
     this.inputStream = inputStream;
     this.gain = audioContext.createGain();
-    this.pan = audioContext.createPanner();
+    this.pan = audioContext.createStereoPanner();
     this.gain.connect(this.pan);
     this.pan.connect(audioContext.destination);
+    this.pitch = 0;
     this.sourceQueue = new Queue();
     this.intervalId = null;
   }
@@ -32,6 +34,7 @@ export class AudioTrack {
     const source = this.audioContext.createBufferSource();
     source.buffer = this.buffer;
     source.connect(this.gain);
+    source.detune.value = this.pitch;
     return source;
   }
   play(startTime: number, loopLength: number, nextLoopStart: number) {
@@ -134,6 +137,49 @@ export class AudioTrack {
       sampleRate,
     );
     for (let channel = 0; channel < data.length; channel++) {
+      newBuffer.copyToChannel(data[channel], channel);
+    }
+    return newBuffer;
+  }
+  changePan(val: number) {
+    // -1 is panned hard left, 1 is panned hard right, 0 is center pan
+    if (val < -1 || val > 1) {
+      throw Error('Pan value must be within -1 an 1 (inclusive).');
+    }
+    this.pan.pan.value = val;
+  }
+  changeGain(val: number) {
+    this.gain.gain.value = val;
+  }
+  changePitch(semitones: number) {
+    if (semitones < -12 || semitones > 12) {
+      throw Error('Number of semitones must be within -12 and 12');
+    }
+    this.pitch = semitones * 100;
+
+    // change pitch for any already queued source nodes (changing pitch during playback)
+    for (const source of this.sourceQueue) {
+      source.detune.value = this.pitch;
+    }
+  }
+  changeReverse() {
+    this.buffer = this.reversedBuffer();
+  }
+  reversedBuffer() {
+    if (!this.buffer) {
+      throw Error(`No buffer found for track ${this.id} to reverse`);
+    }
+    const data = [];
+    for (let channel = 0; channel < this.buffer.numberOfChannels; channel++) {
+      const audio = this.buffer.getChannelData(channel);
+      data.push(audio.reverse());
+    }
+    const newBuffer = this.audioContext.createBuffer(
+      this.buffer.numberOfChannels,
+      this.buffer.length,
+      this.buffer.sampleRate,
+    );
+    for (let channel = 0; channel < this.buffer.numberOfChannels; channel++) {
       newBuffer.copyToChannel(data[channel], channel);
     }
     return newBuffer;
