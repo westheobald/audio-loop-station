@@ -19,6 +19,7 @@ type LoopContextType = {
 
 const LoopContext = createContext<LoopContextType | undefined>(undefined);
 
+// Modularizes Loop Station functionalities for use in all components
 export const LoopProvider = ({ children}: {children: React.ReactNode }) => {
     const [loopStation, setLoopStation] = useState<LoopStation>();
     const [isInitialized, setIsInitialized] = useState(false);
@@ -59,6 +60,7 @@ export const LoopProvider = ({ children}: {children: React.ReactNode }) => {
       );
 };
 
+// For use in components
 export const useLoop = () => {
     const context = useContext(LoopContext);
     if (!context) {

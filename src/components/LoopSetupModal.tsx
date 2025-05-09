@@ -22,10 +22,7 @@ export default function LoopSetupModal() {
   
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* Dark backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-[0]" />
-
-      {/* Modal content */}
       <div className="bg-neutral-900 rounded-lg p-8 shadow-xl text-white space-y-8 w-[90vw] max-w-2xl z-[1]">
         <h2 className="text-2xl font-bold text-center">Loop Parameters</h2>
 
@@ -80,6 +77,7 @@ export default function LoopSetupModal() {
         </div>
 
         <div className="flex flex-col items-center gap-4">
+          {/* Requests access to user input */}
           {!isInitialized && (
             <button
               className="bg-accent text-black px-6 py-2 rounded hover:bg-blue-400 transition"

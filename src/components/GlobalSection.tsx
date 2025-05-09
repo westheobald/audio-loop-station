@@ -1,5 +1,4 @@
 "use client";
-import { AudioTrack } from "@/audio/audio-track";
 import { useLoop } from "@/contexts/LoopContext";
 import { useState } from "react";
 
@@ -13,6 +12,8 @@ export default function GlobalSection() {
 return (
   <section className="flex flex-col gap-2">
     <div className="grid grid-cols-2 gap-2">
+      
+      {/* Controls metronome */}
       <button
         onClick={() => {
           if (isMetronomeOn) {
@@ -31,6 +32,7 @@ return (
           {isMetronomeOn ? "Stop Metronome" : "Start Metronome"}
         </button>
 
+        {/* Controls loop playback */}
         <button
           onClick={() => {
             if (!isPlaying) {

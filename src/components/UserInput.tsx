@@ -17,6 +17,7 @@ export default function UserInput() {
   const [showModal, setShowModal] = useState(false);
 
   return (
+    // Displays inputs from modal
     <div className="flex flex-col items-center gap-2 mt-4">
       <div className="flex gap-8 justify-center">
         <div className="flex flex-col items-center gap-1">
@@ -54,6 +55,7 @@ export default function UserInput() {
         />
       </div>
 
+      {/* Opens modal */}
       <button
         className="mt-3 border px-4 py-2 rounded hover:bg-accent hover:text-black transition"
         onClick={() => setShowModal(true)}
