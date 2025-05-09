@@ -89,15 +89,15 @@ export class AudioTrack {
     let nextLoopStart = startTime;
     const loop = () => {
       const source = this.createSourceNode();
-      source.start(nextLoopStart);
-      this.sourceQueue.enqueue(source);
-      nextLoopStart += loopLength;
-
       source.addEventListener(
         'ended',
         () => this.removeFinishedSource(source),
         { once: true },
       );
+
+      source.start(nextLoopStart);
+      this.sourceQueue.enqueue(source);
+      nextLoopStart += loopLength;
     };
 
     loop();
@@ -110,11 +110,13 @@ export class AudioTrack {
     let offset = source.buffer.duration - (nextLoopStart - startTime);
     if (offset < 0) offset = 0; // protect against floating point math
 
-    source.start(startTime, offset);
-    this.sourceQueue.enqueue(source);
     source.addEventListener('ended', () => this.removeFinishedSource(source), {
       once: true,
     });
+    
+    source.start(startTime, offset);
+    this.sourceQueue.enqueue(source);
+    
   }
   removeFinishedSource(source: AudioBufferSourceNode) {
     const finishedSource = this.sourceQueue.dequeue();

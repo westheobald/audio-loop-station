@@ -8,7 +8,7 @@ export default function Track({ index }: {index: number}) {
     const [level, setLevel] = useState(80);
     const [muted, setMuted] = useState(false);
     return (
-      <div className="flex flex-col items-center gap-8 px-2">
+      <div className="flex flex-col items-center gap-2 px-2">
         {/* Slider for track levels */}
         <Led color="red-500" />
         <Slider value={level} onChange={(e) => setLevel(Array.isArray(e.value) ? e.value[0] : e.value)} orientation="vertical" style={{width: '1.5rem'}} />

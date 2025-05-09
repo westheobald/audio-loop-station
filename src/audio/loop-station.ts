@@ -86,8 +86,27 @@ export class LoopStation {
     );
     return this.startTime;
   }
-  playAll() {}
-  stopAll() {}
+  playAll() {
+    if (this.isRunning) this.stopAll();
+    const now = this.audioContext.currentTime;
+    const startTime = this.isRunning ? now : this.start();
+    const nextLoopStart = this.getNextLoopStart();
+
+    for (const track of this.audioTracks) {
+      if (track.buffer) 
+      track.play(startTime, this.loopInfo.loopLength, nextLoopStart);
+    }
+    this.isRunning = true;
+  }
+
+  stopAll() {
+    for (const track of this.audioTracks) {
+      track.stop();
+    }
+    this.metronome.stop();
+    this.isRunning = false;
+  }
+
   async recordTrack(audioTrack: AudioTrack) {
     const startTime = this.isRunning ? this.getNextLoopStart() : this.start();
     await audioTrack.record(startTime, this.loopInfo.loopLength, this.latency);
