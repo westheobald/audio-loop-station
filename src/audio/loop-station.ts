@@ -79,15 +79,28 @@ export class LoopStation {
   start() {
     this.startTime = this.audioContext.currentTime;
     if (this.isCountIn) this.startTime = this.metronome.countIn(this.startTime);
-    this.metronome.play(
-      this.startTime,
-      this.loopInfo.loopLength,
-      this.getNextLoopStart(),
-    );
+    this.metronome.scheduleLoop(this.startTime, this.loopInfo.loopLength);
     return this.startTime;
   }
-  playAll() {}
-  stopAll() {}
+  playAll() {
+    let startTime = this.audioContext.currentTime;
+    if (!this.isRunning) startTime = this.start();
+    for (const audioTrack of this.audioTracks) {
+      if (!audioTrack.buffer) continue;
+      audioTrack.play(
+        startTime,
+        this.loopInfo.loopLength,
+        this.getNextLoopStart(),
+      );
+    }
+  }
+  stopAll() {
+    for (const audioTrack of this.audioTracks) {
+      audioTrack.stop();
+    }
+    this.metronome.stop();
+    this.isRunning = false;
+  }
   async recordTrack(audioTrack: AudioTrack) {
     const startTime = this.isRunning ? this.getNextLoopStart() : this.start();
     await audioTrack.record(startTime, this.loopInfo.loopLength, this.latency);
@@ -108,5 +121,69 @@ export class LoopStation {
   }
   stopTrack(audioTrack: AudioTrack) {
     audioTrack.stop();
+  }
+  store() {
+    const object: {
+      loopInfo: LoopInfo;
+      audioTracks: { [key: number]: number[][] };
+    } = {
+      loopInfo: this.loopInfo,
+      audioTracks: {},
+    };
+    for (const audioTrack of this.audioTracks) {
+      if (!audioTrack.buffer) continue;
+      const data = [];
+      for (
+        let channel = 0;
+        channel < audioTrack.buffer.numberOfChannels;
+        channel++
+      ) {
+        data.push(Array.from(audioTrack.buffer.getChannelData(channel)));
+      }
+      object.audioTracks[audioTrack.id] = data;
+    }
+    const blob = new Blob([JSON.stringify(object)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'loop';
+    document.body.append(a);
+    a.click();
+  }
+  load(file: string) {
+    const json = JSON.parse(file);
+    this.stopAll();
+    this.updateLooper(
+      json.loopInfo.bpm,
+      json.loopInfo.beatsPerBar,
+      json.loopInfo.numberOfBars,
+      json.loopInfo.countInLength,
+    );
+    this.metronome.createMetronome(
+      this.loopInfo.loopLength,
+      this.loopInfo.beatLength,
+      this.loopInfo.beatsPerBar,
+    );
+    // NOTE: Resets all audio tracks to empty buffer
+    // Currently keeps all other state settings the same
+    for (const audioTrack of this.audioTracks) {
+      audioTrack.buffer = undefined;
+    }
+    for (const key in json.audioTracks) {
+      const id = +key;
+      const audioData = json.audioTracks[id];
+      const floatData = audioData.map((arr: number[]) => new Float32Array(arr));
+      const buffer = this.audioContext.createBuffer(
+        floatData.length,
+        floatData[0].length,
+        this.audioContext.sampleRate,
+      );
+      for (let i = 0; i < floatData.length; i++) {
+        buffer.copyToChannel(floatData[i], i);
+      }
+      this.audioTracks[id].buffer = buffer;
+    }
   }
 }
