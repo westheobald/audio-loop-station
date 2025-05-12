@@ -69,6 +69,9 @@ export class LoopStation {
       this.inputStream,
       loopInfo,
     );
+    for (const audioTrack of this.audioTracks) {
+      audioTrack.removeBuffer();
+    }
     this.loopInfo = loopInfo;
     this.metronome = metronome;
     // NOTE: If implementing audio track tempo changes, alter playback speeds
@@ -78,8 +81,13 @@ export class LoopStation {
   }
   start() {
     this.startTime = this.audioContext.currentTime;
-    if (this.isCountIn) this.startTime = this.metronome.countIn(this.startTime);
-    this.metronome.scheduleLoop(this.startTime, this.loopInfo.loopLength);
+    if (this.isMetronome) {
+      if (this.isCountIn) {
+        this.startTime = this.metronome.countIn(this.startTime);
+      }
+      this.metronome.scheduleLoop(this.startTime, this.loopInfo.loopLength);
+    }
+    this.isRunning = true;
     return this.startTime;
   }
   playAll() {
@@ -103,7 +111,9 @@ export class LoopStation {
   }
   async recordTrack(audioTrack: AudioTrack) {
     const startTime = this.isRunning ? this.getNextLoopStart() : this.start();
+    this.isRecording = true;
     await audioTrack.record(startTime, this.loopInfo.loopLength, this.latency);
+    this.isRecording = false;
     audioTrack.play(
       this.audioContext.currentTime,
       this.loopInfo.loopLength,

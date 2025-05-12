@@ -26,6 +26,10 @@ export class AudioTrack {
     this.sourceQueue = new Queue();
     this.intervalId = null;
   }
+  removeBuffer() {
+    this.stop();
+    this.buffer = undefined;
+  }
   updateBuffer(buffer: AudioBuffer) {
     this.buffer = buffer;
   }
@@ -38,6 +42,7 @@ export class AudioTrack {
     return source;
   }
   play(startTime: number, loopLength: number, nextLoopStart: number) {
+    if (!this.buffer) return;
     this.scheduleSingle(startTime, nextLoopStart);
     this.scheduleLoop(nextLoopStart, loopLength);
   }
