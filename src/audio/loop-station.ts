@@ -2,6 +2,18 @@ import { AudioTrack } from './audio-track';
 import LoopInfo from './loop-info';
 import { Metronome } from './metronome';
 
+interface storedAudioTrack {
+  id: number;
+  buffer?: number[][];
+  pitch: number;
+  gain: number;
+  pan: number;
+  reversed: boolean;
+}
+interface storedLoop {
+  loopInfo: LoopInfo;
+  audioTracks: storedAudioTrack[];
+}
 export class LoopStation {
   audioContext: AudioContext;
   inputStream: MediaStream;
@@ -133,37 +145,56 @@ export class LoopStation {
     audioTrack.stop();
   }
   store() {
-    const object: {
-      loopInfo: LoopInfo;
-      audioTracks: { [key: number]: number[][] };
-    } = {
+    // TODO: Gzip
+    const fileObject = {
       loopInfo: this.loopInfo,
-      audioTracks: {},
+      audioTracks: this.audioTracks.map((audioTrack) =>
+        buildAudioObject(audioTrack),
+      ),
     };
-    for (const audioTrack of this.audioTracks) {
-      if (!audioTrack.buffer) continue;
-      const data = [];
-      for (
-        let channel = 0;
-        channel < audioTrack.buffer.numberOfChannels;
-        channel++
-      ) {
-        data.push(Array.from(audioTrack.buffer.getChannelData(channel)));
-      }
-      object.audioTracks[audioTrack.id] = data;
-    }
-    const blob = new Blob([JSON.stringify(object)], {
+    const blob = new Blob([JSON.stringify(fileObject)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'loop';
+    const fileName = prompt('Name of loop:');
+    if (!fileName) return;
+    a.download = fileName;
     document.body.append(a);
     a.click();
+
+    function buildAudioObject(audioTrack: AudioTrack): storedAudioTrack {
+      const file: storedAudioTrack = {
+        id: audioTrack.id,
+        buffer: undefined,
+        gain: 1,
+        pan: 0,
+        pitch: 0,
+        reversed: false,
+      };
+      if (audioTrack.buffer) {
+        const data = [];
+        for (
+          let channel = 0;
+          channel < audioTrack.buffer.numberOfChannels;
+          channel++
+        ) {
+          data.push(Array.from(audioTrack.buffer.getChannelData(channel)));
+        }
+        file.buffer = data;
+
+        file.gain = audioTrack.gain.gain.value;
+        file.pan = audioTrack.pan.pan.value;
+        file.pitch = audioTrack.pitch;
+        file.reversed = audioTrack.reversed;
+      }
+      return file;
+    }
   }
   load(file: string) {
-    const json = JSON.parse(file);
+    // TODO: Gunzip
+    const json: storedLoop = JSON.parse(file);
     this.stopAll();
     this.updateLooper(
       json.loopInfo.bpm,
@@ -171,29 +202,35 @@ export class LoopStation {
       json.loopInfo.numberOfBars,
       json.loopInfo.countInLength,
     );
-    this.metronome.createMetronome(
-      this.loopInfo.loopLength,
-      this.loopInfo.beatLength,
-      this.loopInfo.beatsPerBar,
-    );
-    // NOTE: Resets all audio tracks to empty buffer
-    // Currently keeps all other state settings the same
-    for (const audioTrack of this.audioTracks) {
-      audioTrack.buffer = undefined;
-    }
-    for (const key in json.audioTracks) {
-      const id = +key;
-      const audioData = json.audioTracks[id];
-      const floatData = audioData.map((arr: number[]) => new Float32Array(arr));
-      const buffer = this.audioContext.createBuffer(
-        floatData.length,
-        floatData[0].length,
-        this.audioContext.sampleRate,
+    this.audioTracks = json.audioTracks.map((storedAudioTrack) => {
+      const newAudioTrack = new AudioTrack(
+        storedAudioTrack.id,
+        this.audioContext,
+        this.inputStream,
       );
-      for (let i = 0; i < floatData.length; i++) {
-        buffer.copyToChannel(floatData[i], i);
+
+      const audioData = storedAudioTrack.buffer;
+      if (audioData) {
+        const floatData = audioData.map(
+          (arr: number[]) => new Float32Array(arr),
+        );
+        const buffer = this.audioContext.createBuffer(
+          floatData.length,
+          floatData[0].length,
+          this.audioContext.sampleRate,
+        );
+        for (let channel = 0; channel < floatData.length; channel++) {
+          buffer.copyToChannel(floatData[channel], channel);
+        }
+        newAudioTrack.buffer = buffer;
       }
-      this.audioTracks[id].buffer = buffer;
-    }
+
+      newAudioTrack.changeGain(storedAudioTrack.gain);
+      newAudioTrack.changePan(storedAudioTrack.pan);
+      newAudioTrack.changePitch(storedAudioTrack.pitch);
+      newAudioTrack.reversed = storedAudioTrack.reversed;
+
+      return newAudioTrack;
+    });
   }
 }

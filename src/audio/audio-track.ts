@@ -8,6 +8,7 @@ export class AudioTrack {
   gain: GainNode;
   pan: StereoPannerNode;
   pitch: number;
+  reversed: boolean;
   sourceQueue: Queue<AudioBufferSourceNode>;
   intervalId: ReturnType<typeof setInterval> | null;
   constructor(
@@ -23,6 +24,7 @@ export class AudioTrack {
     this.gain.connect(this.pan);
     this.pan.connect(audioContext.destination);
     this.pitch = 0;
+    this.reversed = false;
     this.sourceQueue = new Queue();
     this.intervalId = null;
   }
@@ -168,6 +170,7 @@ export class AudioTrack {
     }
   }
   changeReverse() {
+    this.reversed = !this.reversed;
     this.buffer = this.reversedBuffer();
   }
   reversedBuffer() {
