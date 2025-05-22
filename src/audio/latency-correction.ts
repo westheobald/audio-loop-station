@@ -16,7 +16,6 @@ export default class LatencyCorrection extends AudioTrack {
   }
   async record(startTime: number, loopLength: number, latency: number) {
     this.originalBuffer = await super.record(startTime, loopLength, latency);
-    console.log(this.originalBuffer);
     return this.originalBuffer;
   }
 }

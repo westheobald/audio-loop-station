@@ -16,7 +16,6 @@ export default function LatencyTest() {
   }
   if (!loopStation) return <button onClick={init}>Start</button>;
   const audioTrack = loopStation.audioTracks[0];
-  console.log(loopStation);
   return (
     <div>
       <button onClick={() => loopStation.recordTrack(audioTrack)}>

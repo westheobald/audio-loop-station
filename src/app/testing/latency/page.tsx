@@ -61,7 +61,6 @@ export default function LatencyTest() {
             loopStation.getNextLoopStart(),
           );
           loopStation.latency = +e.target.value;
-          console.log(loopStation);
         }}
       />
     </div>
