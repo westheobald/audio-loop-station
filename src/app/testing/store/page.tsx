@@ -25,15 +25,23 @@ export default function StoreAndLoadTest() {
     reader.readAsText(file);
   }
   if (!loopStation) return <button onClick={init}>Start</button>;
-  const audioTrack = loopStation.audioTracks[0];
+  loopStation.latency = 50;
+  loopStation.isCountIn = false;
   return (
-    <div>
+    <div className='flex flex-col'>
       <button
         onClick={() => {
-          loopStation.recordTrack(audioTrack);
+          loopStation.recordTrack(loopStation.audioTracks[0]);
         }}
       >
-        Record
+        Record 1
+      </button>
+      <button
+        onClick={() => {
+          loopStation.recordTrack(loopStation.audioTracks[1]);
+        }}
+      >
+        Record 2
       </button>
       <button
         onClick={() => {
