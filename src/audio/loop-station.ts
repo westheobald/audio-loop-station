@@ -2,6 +2,18 @@ import { AudioTrack } from './audio-track';
 import LoopInfo from './loop-info';
 import { Metronome } from './metronome';
 
+interface storedAudioTrack {
+  id: number;
+  buffer?: number[][];
+  pitch: number;
+  gain: number;
+  pan: number;
+  reversed: boolean;
+}
+interface storedLoop {
+  loopInfo: LoopInfo;
+  audioTracks: storedAudioTrack[];
+}
 export class LoopStation {
   audioContext: AudioContext;
   inputStream: MediaStream;
@@ -69,6 +81,9 @@ export class LoopStation {
       this.inputStream,
       loopInfo,
     );
+    for (const audioTrack of this.audioTracks) {
+      audioTrack.removeBuffer();
+    }
     this.loopInfo = loopInfo;
     this.metronome = metronome;
     // NOTE: If implementing audio track tempo changes, alter playback speeds
@@ -78,15 +93,17 @@ export class LoopStation {
   }
   start() {
     this.startTime = this.audioContext.currentTime;
-    if (this.isCountIn) this.startTime = this.metronome.countIn(this.startTime);
-    this.metronome.play(
-      this.startTime,
-      this.loopInfo.loopLength,
-      this.getNextLoopStart(),
-    );
+    if (this.isMetronome) {
+      if (this.isCountIn) {
+        this.startTime = this.metronome.countIn(this.startTime);
+      }
+      this.metronome.scheduleLoop(this.startTime, this.loopInfo.loopLength);
+    }
+    this.isRunning = true;
     return this.startTime;
   }
   playAll() {
+<<<<<<< HEAD
     if (this.isRunning) this.stopAll();
     const now = this.audioContext.currentTime;
     const startTime = this.isRunning ? now : this.start();
@@ -102,14 +119,35 @@ export class LoopStation {
   stopAll() {
     for (const track of this.audioTracks) {
       track.stop();
+=======
+    let startTime = this.audioContext.currentTime;
+    if (!this.isRunning) startTime = this.start();
+    for (const audioTrack of this.audioTracks) {
+      if (!audioTrack.buffer) continue;
+      audioTrack.play(
+        startTime,
+        this.loopInfo.loopLength,
+        this.getNextLoopStart(),
+      );
+    }
+  }
+  stopAll() {
+    for (const audioTrack of this.audioTracks) {
+      audioTrack.stop();
+>>>>>>> fc7f62d75e8888cf916ec171daaf2446bd9e5a80
     }
     this.metronome.stop();
     this.isRunning = false;
   }
+<<<<<<< HEAD
 
+=======
+>>>>>>> fc7f62d75e8888cf916ec171daaf2446bd9e5a80
   async recordTrack(audioTrack: AudioTrack) {
     const startTime = this.isRunning ? this.getNextLoopStart() : this.start();
+    this.isRecording = true;
     await audioTrack.record(startTime, this.loopInfo.loopLength, this.latency);
+    this.isRecording = false;
     audioTrack.play(
       this.audioContext.currentTime,
       this.loopInfo.loopLength,
@@ -127,5 +165,94 @@ export class LoopStation {
   }
   stopTrack(audioTrack: AudioTrack) {
     audioTrack.stop();
+  }
+  store() {
+    // TODO: Gzip
+    const fileObject = {
+      loopInfo: this.loopInfo,
+      audioTracks: this.audioTracks.map((audioTrack) =>
+        buildAudioObject(audioTrack),
+      ),
+    };
+    const blob = new Blob([JSON.stringify(fileObject)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const fileName = prompt('Name of loop:');
+    if (!fileName) return;
+    a.download = fileName;
+    document.body.append(a);
+    a.click();
+
+    function buildAudioObject(audioTrack: AudioTrack): storedAudioTrack {
+      const file: storedAudioTrack = {
+        id: audioTrack.id,
+        buffer: undefined,
+        gain: 1,
+        pan: 0,
+        pitch: 0,
+        reversed: false,
+      };
+      if (audioTrack.buffer) {
+        const data = [];
+        for (
+          let channel = 0;
+          channel < audioTrack.buffer.numberOfChannels;
+          channel++
+        ) {
+          data.push(Array.from(audioTrack.buffer.getChannelData(channel)));
+        }
+        file.buffer = data;
+
+        file.gain = audioTrack.gain.gain.value;
+        file.pan = audioTrack.pan.pan.value;
+        file.pitch = audioTrack.pitch;
+        file.reversed = audioTrack.reversed;
+      }
+      return file;
+    }
+  }
+  load(file: string) {
+    // TODO: Gunzip
+    const json: storedLoop = JSON.parse(file);
+    this.stopAll();
+    this.updateLooper(
+      json.loopInfo.bpm,
+      json.loopInfo.beatsPerBar,
+      json.loopInfo.numberOfBars,
+      json.loopInfo.countInLength,
+    );
+    this.audioTracks = json.audioTracks.map((storedAudioTrack) => {
+      const newAudioTrack = new AudioTrack(
+        storedAudioTrack.id,
+        this.audioContext,
+        this.inputStream,
+      );
+
+      const audioData = storedAudioTrack.buffer;
+      if (audioData) {
+        const floatData = audioData.map(
+          (arr: number[]) => new Float32Array(arr),
+        );
+        const buffer = this.audioContext.createBuffer(
+          floatData.length,
+          floatData[0].length,
+          this.audioContext.sampleRate,
+        );
+        for (let channel = 0; channel < floatData.length; channel++) {
+          buffer.copyToChannel(floatData[channel], channel);
+        }
+        newAudioTrack.buffer = buffer;
+      }
+
+      newAudioTrack.changeGain(storedAudioTrack.gain);
+      newAudioTrack.changePan(storedAudioTrack.pan);
+      newAudioTrack.changePitch(storedAudioTrack.pitch);
+      newAudioTrack.reversed = storedAudioTrack.reversed;
+
+      return newAudioTrack;
+    });
   }
 }
