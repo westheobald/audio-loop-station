@@ -60,7 +60,7 @@ export default function UserInput() {
         className="mt-3 border px-4 py-2 rounded hover:bg-accent hover:text-black transition"
         onClick={() => setShowModal(true)}
       >
-        Edit Loop Parameters
+        Edit
       </button>
 
       {showModal && (

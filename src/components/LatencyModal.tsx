@@ -61,9 +61,9 @@ export default function LatencyModal({onNext}: {onNext: () => void}) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
         <div className="bg-neutral-900 text-white p-6 rounded-lg space-y-4 max-w-xl w-full">
-            <h2 className="text-xl font-bold text-center">Adjust for Input Latency</h2>
+            <h2 className="text-xl font-bold text-center">Great! Next Step:</h2>
             <p className="text-sm text-center">
-                Great! Now, record a test and adjust the delay until playback is in sync.
+                To check for latency, record a test and adjust the delay until playback is in sync.
             </p>
             <p className="text-sm text-center">
                 Recommended: Count along with the click then correct until the count and click are aligned.

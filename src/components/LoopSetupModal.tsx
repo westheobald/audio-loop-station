@@ -24,7 +24,7 @@ export default function LoopSetupModal() {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-[0]" />
       <div className="bg-neutral-900 rounded-lg p-8 shadow-xl text-white space-y-8 w-[90vw] max-w-2xl z-[1]">
-        <h2 className="text-2xl font-bold text-center">Loop Parameters</h2>
+        <h2 className="text-2xl font-bold text-center">Loop Setup</h2>
 
         <div className="flex flex-wrap gap-8 justify-center items-center">
           {/* Beats per Bar */}
