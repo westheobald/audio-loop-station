@@ -33,9 +33,9 @@ export default function Home() {
         </section>
 
         {/* Transport Controls */}
-        <section className="w-full max-w-5xl flex justify-center mt-auto pt-2">
+        {/* <section className="w-full max-w-5xl flex justify-center mt-auto pt-2">
           <TransportBar />
-        </section>
+        </section> */}
       </main>
     </>
   );

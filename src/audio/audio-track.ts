@@ -52,7 +52,14 @@ export class AudioTrack {
     const previousGain = this.gain.gain.value;
     this.gain.gain.value = 0;
     if (this.intervalId) clearInterval(this.intervalId);
-    for (const node of this.sourceQueue.drain()) node.disconnect();
+    for (const node of this.sourceQueue.drain()) {
+      try {
+        node.stop(); // <--- make sure this is here
+      } catch (e) {
+        console.warn(`Node stopped: ${e}`);
+      }
+      node.disconnect();
+    }
     this.intervalId = null;
     this.gain.gain.value = previousGain;
   }

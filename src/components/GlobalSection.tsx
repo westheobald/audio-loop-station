@@ -46,24 +46,6 @@ return (
         >
           {isPlaying ? "Stop" : "Play"}
         </button>
-
-        <button
-          onClick={() => {
-            console.log("Pitch shifting not implemented yet.");
-          }}
-          className="border rounded py-1 text-sm hover:bg-accent hover:text-black transition"
-        >
-          Pitch Change
-        </button>
-
-        <button
-          onClick={() => {
-            console.log("Reverse not implemented yet.");
-          }}
-        className="border rounded py-1 text-sm hover:bg-accent hover:text-black transition"
-        >
-          Reverse
-        </button>
     </div>
   </section>
   );
