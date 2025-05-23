@@ -1,13 +1,20 @@
+"use client"
 import TransportBar from "@/components/TransportBar";
 import MixerSection from "@/components/MixerSection";
 import GlobalSection from "@/components/GlobalSection";
 import UserInput from "@/components/UserInput";
 import LoopSetupModal from "@/components/LoopSetupModal";
+import RequestAccessModal from "@/components/RequestAccessModal";
+import LatencyModal from "@/components/LatencyModal";
+import { useState } from "react";
 
 export default function Home() {
+  const [setupStep, setSetupStep] = useState<1 | 2 | 3>(1);
   return (
     <>
-      <LoopSetupModal />
+      {setupStep === 1 && <RequestAccessModal onNext={() => setSetupStep(2)} />}
+      {setupStep === 2 && <LatencyModal onNext={() => setSetupStep(3)} />}
+      {setupStep === 3 && <LoopSetupModal />}
 
       <main className="bg-black text-white min-h-screen flex flex-col items-center px-4 py-2 gap-12">
         {/* User Inputs */}

@@ -87,7 +87,7 @@ export default function LoopSetupModal() {
             </button>
           )}
           <button
-            className="border px-6 py-2 rounded hover:bg-accent hover:text-black transition"
+            className="block mx-auto mt-6 border px-6 py-2 rounded hover:bg-neutral hover:text-blue-400 transition"
             onClick={() => setShow(false)}
           >
             Confirm
