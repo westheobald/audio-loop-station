@@ -44,15 +44,23 @@ export const LoopProvider = ({ children }: { children: React.ReactNode }) => {
     if (loopStation) return;
 
     const audioContext = new AudioContext();
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      const station = new LoopStation(audioContext, stream);
-      station.audioTracks.forEach((audioTrack, i) => {
-        audioTrackGains[i] = +audioTrack.gain.gain.value * 100;
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: {
+          autoGainControl: true,
+          echoCancellation: false,
+          noiseSuppression: false,
+        },
+      })
+      .then((stream) => {
+        const station = new LoopStation(audioContext, stream);
+        station.audioTracks.forEach((audioTrack, i) => {
+          audioTrackGains[i] = +audioTrack.gain.gain.value * 100;
+        });
+        setAudioTrackGains([...audioTrackGains]);
+        setLoopStation(station);
+        setIsInitialized(true);
       });
-      setAudioTrackGains([...audioTrackGains]);
-      setLoopStation(station);
-      setIsInitialized(true);
-    });
   };
 
   return (
