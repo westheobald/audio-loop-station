@@ -227,10 +227,15 @@ export class LoopStation {
 
       newAudioTrack.changeGain(storedAudioTrack.gain);
       newAudioTrack.changePan(storedAudioTrack.pan);
-      newAudioTrack.changePitch(storedAudioTrack.pitch);
+      newAudioTrack.changePitch(storedAudioTrack.pitch / 100);
       newAudioTrack.reversed = storedAudioTrack.reversed;
 
       return newAudioTrack;
     });
+  }
+  changeReverse(audioTrack: AudioTrack) {
+    audioTrack.changeReverse();
+    this.stopTrack(audioTrack);
+    this.playTrack(audioTrack);
   }
 }

@@ -101,11 +101,9 @@ export class AudioTrack {
     let nextLoopStart = startTime;
     const loop = () => {
       const source = this.createSourceNode();
-      source.addEventListener(
-        'ended',
-        () => this.removeFinishedSource(source),
-        { once: true },
-      );
+      source.addEventListener('ended', () => this.removeFinishedSource(), {
+        once: true,
+      });
 
       source.start(nextLoopStart);
       this.sourceQueue.enqueue(source);
@@ -122,21 +120,15 @@ export class AudioTrack {
     let offset = source.buffer.duration - (nextLoopStart - startTime);
     if (offset < 0) offset = 0; // protect against floating point math
 
-    source.addEventListener('ended', () => this.removeFinishedSource(source), {
+    source.addEventListener('ended', () => this.removeFinishedSource(), {
       once: true,
     });
-    
+
     source.start(startTime, offset);
     this.sourceQueue.enqueue(source);
-    
   }
-  removeFinishedSource(source: AudioBufferSourceNode) {
-    const finishedSource = this.sourceQueue.dequeue();
-    if (finishedSource !== source) {
-      throw Error(
-        `Source queue error for track: ${this.id}. Dequeue source does not match.`,
-      );
-    }
+  removeFinishedSource() {
+    this.sourceQueue.dequeue();
   }
   slice(offset: number, length: number, buffer: AudioBuffer) {
     // offset in seconds

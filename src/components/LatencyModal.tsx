@@ -69,6 +69,9 @@ export default function LatencyModal({ onNext }: { onNext: () => void }) {
           step='10'
           defaultValue='0'
           onChange={(e) => {
+            loopStation.latency = +e.target.value;
+            setIsPlaying(true);
+            setLatency(+e.target.value);
             if (!latencyTrack.originalBuffer) return;
             const newBuffer = latencyTrack.sliceOriginal(
               +e.target.value / 1000,
@@ -77,9 +80,6 @@ export default function LatencyModal({ onNext }: { onNext: () => void }) {
             latencyTrack.stop();
             latencyTrack.buffer = newBuffer;
             loopStation.playTrack(latencyTrack);
-            loopStation.latency = +e.target.value;
-            setIsPlaying(true);
-            setLatency(+e.target.value);
           }}
         />
 
@@ -97,4 +97,3 @@ export default function LatencyModal({ onNext }: { onNext: () => void }) {
     </div>
   );
 }
-

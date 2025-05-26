@@ -1,5 +1,6 @@
-"use client";
-import { AudioTrack } from "@/audio/audio-track";
+'use client';
+import { AudioTrack } from '@/audio/audio-track';
+import { useLoop } from '@/contexts/LoopContext';
 
 export default function TrackSettingsModal({
   track,
@@ -8,15 +9,19 @@ export default function TrackSettingsModal({
   track: AudioTrack;
   onClose: () => void;
 }) {
+  const { loopStation } = useLoop();
+  if (!loopStation) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-      <div className="bg-neutral-900 p-6 rounded-lg w-[90vw] max-w-md text-white space-y-4 shadow-xl">
-        <h2 className="text-xl font-bold text-center">Track {track.id} Settings</h2>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70'>
+      <div className='bg-neutral-900 p-6 rounded-lg w-[90vw] max-w-md text-white space-y-4 shadow-xl'>
+        <h2 className='text-xl font-bold text-center'>
+          Track {track.id} Settings
+        </h2>
 
-        <div className="flex flex-col gap-2">
-          <label className="text-sm">Pitch (semitones)</label>
+        <div className='flex flex-col gap-2'>
+          <label className='text-sm'>Pitch (semitones)</label>
           <input
-            type="range"
+            type='range'
             min={-12}
             max={12}
             step={1}
@@ -24,9 +29,9 @@ export default function TrackSettingsModal({
             onChange={(e) => track.changePitch(+e.target.value)}
           />
 
-          <label className="text-sm">Pan</label>
+          <label className='text-sm'>Pan</label>
           <input
-            type="range"
+            type='range'
             min={-1}
             max={1}
             step={0.1}
@@ -35,14 +40,14 @@ export default function TrackSettingsModal({
           />
 
           <button
-            className="border px-4 py-2 rounded hover:bg-accent hover:text-black transition"
-            onClick={() => track.changeReverse()}
+            className='border px-4 py-2 rounded hover:bg-accent hover:text-black transition'
+            onClick={() => loopStation.changeReverse(track)}
           >
             Reverse Audio
           </button>
 
           <button
-            className="border px-4 py-2 rounded hover:bg-accent hover:text-black transition"
+            className='border px-4 py-2 rounded hover:bg-accent hover:text-black transition'
             onClick={onClose}
           >
             Close

@@ -10,24 +10,30 @@ import { useLoop } from '@/contexts/LoopContext';
 export default function Track({
   index,
   track,
+  i,
 }: {
   index: number;
   track: AudioTrack;
+  i: number;
 }) {
-  const { loopStation } = useLoop();
-  const [level, setLevel] = useState(track.gain.gain.value * 100);
+  const { loopStation, setIsPlaying, audioTrackGains, setAudioTrackGains } =
+    useLoop();
+  const level = audioTrackGains[i];
   const [muted, setMuted] = useState(false);
+  const [previousGain, setPreviousGain] = useState(track.gain.gain.value * 100);
   const [showSettings, setShowSettings] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
   const handleGainChange = (value: number) => {
-    setLevel(value);
+    audioTrackGains[i] = value;
+    setAudioTrackGains([...audioTrackGains]);
     track.changeGain(value / 100);
   };
 
   const handleRecord = async () => {
-    if (!loopStation) return;
+    if (!loopStation || loopStation.isRecording) return;
     setIsRecording(true);
+    setIsPlaying(true);
     await loopStation.recordTrack(track);
     setIsRecording(false);
   };
@@ -48,7 +54,14 @@ export default function Track({
       {/* Turns LED color red when track is muted */}
       <div className='flex flex-col items-center'>
         <button
-          onClick={() => setMuted(!muted)}
+          onClick={() => {
+            if (muted) handleGainChange(previousGain);
+            else {
+              setPreviousGain(level);
+              handleGainChange(0);
+            }
+            setMuted(!muted);
+          }}
           className={`w-8 h-8 text-sm font-medium rounded shadow border
                     ${muted ? 'bg-ledRed text-white' : 'bg-neutral-300 text-black'}`}
         >
@@ -77,4 +90,3 @@ export default function Track({
     </div>
   );
 }
-
