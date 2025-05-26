@@ -8,6 +8,7 @@ export default function LatencyModal({ onNext }: { onNext: () => void }) {
   const [latencyTrack, setLatencyTrack] = useState<LatencyCorrection | null>(
     null,
   );
+  const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [latency, setLatency] = useState(0);
 
@@ -39,23 +40,32 @@ export default function LatencyModal({ onNext }: { onNext: () => void }) {
         </p>
         <div className='flex justify-center gap-4'>
           <button
-            onClick={() => loopStation.recordTrack(latencyTrack)}
+            disabled={isRecording}
+            onClick={() => {
+              setIsRecording(true);
+              loopStation.recordTrack(latencyTrack).then(() => {
+                setIsRecording(false);
+                setIsPlaying(true);
+              });
+            }}
             className='bg-neutral-700 text-white px-4 py-2 rounded hover:bg-red-500 hover:text-white transition'
           >
-            Record
+            {isRecording ? 'Recording...' : 'Record'}
           </button>
-          <button
-            onClick={() => {
-              if (isPlaying) {
-                loopStation.stopAll();
-                loopStation.stopTrack(latencyTrack);
-              } else loopStation.playTrack(latencyTrack);
-              setIsPlaying(!isPlaying);
-            }}
-            className='bg-neutral-700 px-4 py-2 rounded hover:bg-black transition'
-          >
-            {isPlaying ? 'Stop' : 'Play'}
-          </button>
+          {latencyTrack.originalBuffer && (
+            <button
+              onClick={() => {
+                if (isPlaying) {
+                  loopStation.stopAll();
+                  loopStation.stopTrack(latencyTrack);
+                } else loopStation.playTrack(latencyTrack);
+                setIsPlaying(!isPlaying);
+              }}
+              className='bg-neutral-700 px-4 py-2 rounded hover:bg-black transition'
+            >
+              {isPlaying ? 'Stop' : 'Play'}
+            </button>
+          )}
         </div>
 
         <label className='text-sm block text-center mt-4'>
@@ -70,16 +80,17 @@ export default function LatencyModal({ onNext }: { onNext: () => void }) {
           defaultValue='0'
           onChange={(e) => {
             loopStation.latency = +e.target.value;
-            setIsPlaying(true);
             setLatency(+e.target.value);
             if (!latencyTrack.originalBuffer) return;
             const newBuffer = latencyTrack.sliceOriginal(
               +e.target.value / 1000,
               loopStation.loopInfo.loopLength,
             );
-            latencyTrack.stop();
             latencyTrack.buffer = newBuffer;
-            loopStation.playTrack(latencyTrack);
+            if (isPlaying) {
+              loopStation.stopTrack(latencyTrack);
+              loopStation.playTrack(latencyTrack);
+            }
           }}
         />
 

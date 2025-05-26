@@ -1,6 +1,7 @@
 'use client';
 import { AudioTrack } from '@/audio/audio-track';
 import { useLoop } from '@/contexts/LoopContext';
+import { useState } from 'react';
 
 export default function TrackSettingsModal({
   track,
@@ -10,6 +11,7 @@ export default function TrackSettingsModal({
   onClose: () => void;
 }) {
   const { loopStation } = useLoop();
+  const [pan, setPan] = useState(+track.pan.pan.value * 100);
   if (!loopStation) return null;
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70'>
@@ -32,11 +34,14 @@ export default function TrackSettingsModal({
           <label className='text-sm'>Pan</label>
           <input
             type='range'
-            min={-1}
-            max={1}
-            step={0.1}
-            defaultValue={track.pan.pan.value}
-            onChange={(e) => track.changePan(+e.target.value)}
+            min={-100}
+            max={100}
+            step={1}
+            value={pan}
+            onChange={(e) => {
+              track.changePan(+e.target.value / 100);
+              setPan(+e.target.value);
+            }}
           />
 
           <button

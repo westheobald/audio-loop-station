@@ -28,6 +28,7 @@ export default function GlobalSection() {
       const fileContent = event.target?.result;
       if (typeof fileContent === 'string') {
         loopStation.load(fileContent);
+        console.log(loopStation.audioTracks);
         setBpm(loopStation.loopInfo.bpm);
         setNumberOfBars(loopStation.loopInfo.numberOfBars);
         setBeatsPerBar(loopStation.loopInfo.beatsPerBar);
@@ -91,4 +92,3 @@ export default function GlobalSection() {
     </section>
   );
 }
-

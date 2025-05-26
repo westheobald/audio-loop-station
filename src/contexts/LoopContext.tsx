@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { LoopStation } from '@/audio/loop-station';
 
 type LoopContextType = {
@@ -33,12 +33,6 @@ export const LoopProvider = ({ children }: { children: React.ReactNode }) => {
   const [countInLength, setCountInLength] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioTrackGains, setAudioTrackGains] = useState(new Array(4).fill(1));
-
-  useEffect(() => {
-    if (!loopStation) return;
-    loopStation.stopAll();
-    loopStation.updateLooper(bpm, beatsPerBar, numberOfBars, countInLength);
-  }, [bpm, beatsPerBar, numberOfBars, countInLength, loopStation]);
 
   const init = () => {
     if (loopStation) return;

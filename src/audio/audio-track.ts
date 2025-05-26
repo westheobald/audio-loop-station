@@ -1,5 +1,4 @@
 import Queue from 'yocto-queue';
-
 export class AudioTrack {
   id: number;
   audioContext: AudioContext;
@@ -40,7 +39,6 @@ export class AudioTrack {
     const source = this.audioContext.createBufferSource();
     source.buffer = this.buffer;
     source.connect(this.gain);
-    source.detune.value = this.pitch;
     return source;
   }
   play(startTime: number, loopLength: number, nextLoopStart: number) {
@@ -163,12 +161,7 @@ export class AudioTrack {
     if (semitones < -12 || semitones > 12) {
       throw Error('Number of semitones must be within -12 and 12');
     }
-    this.pitch = semitones * 100;
-
-    // change pitch for any already queued source nodes (changing pitch during playback)
-    for (const source of this.sourceQueue) {
-      source.detune.value = this.pitch;
-    }
+    this.pitch = semitones;
   }
   changeReverse() {
     this.reversed = !this.reversed;
