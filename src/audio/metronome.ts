@@ -17,13 +17,9 @@ export class Metronome extends AudioTrack {
       const source = this.createSourceNode();
       source.start(startTime, 0, barLength * countInLength);
       this.sourceQueue.enqueue(source);
-      source.addEventListener(
-        'ended',
-        () => this.removeFinishedSource(source),
-        {
-          once: true,
-        },
-      );
+      source.addEventListener('ended', () => this.removeFinishedSource(), {
+        once: true,
+      });
       return startTime + barLength * countInLength;
     };
   }
