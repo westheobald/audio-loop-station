@@ -16,7 +16,6 @@
     "primevue": "^4.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "soundtouchjs": "^0.2.1",
     "yocto-queue": "^1.2.1"
   },
   "devDependencies": {

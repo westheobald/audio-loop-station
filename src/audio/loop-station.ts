@@ -5,7 +5,8 @@ import { Metronome } from './metronome';
 interface storedAudioTrack {
   id: number;
   buffer?: number[][];
-  pitch: number;
+  originalBuffer?: number[][];
+  sliceMs: number;
   gain: number;
   pan: number;
   reversed: boolean;
@@ -86,6 +87,10 @@ export class LoopStation {
     }
     this.loopInfo = loopInfo;
     this.metronome = metronome;
+    // NOTE: If implementing audio track tempo changes, alter playback speeds
+    // to match new loopInfo
+    // Otherwise make changes go on some kind of confirm that will delete the
+    // already recorder tracks
   }
   start() {
     this.startTime = this.audioContext.currentTime;
@@ -98,17 +103,18 @@ export class LoopStation {
     this.isRunning = true;
     return this.startTime;
   }
-  playAll() {
+  playAll(recordTrack?: AudioTrack) {
     let startTime = this.audioContext.currentTime;
     if (!this.isRunning) startTime = this.start();
     for (const audioTrack of this.audioTracks) {
-      if (!audioTrack.buffer) continue;
+      if (!audioTrack.buffer || audioTrack === recordTrack) continue;
       audioTrack.play(
         startTime,
         this.loopInfo.loopLength,
         this.getNextLoopStart(),
       );
     }
+    return startTime;
   }
   stopAll() {
     for (const audioTrack of this.audioTracks) {
@@ -118,7 +124,9 @@ export class LoopStation {
     this.isRunning = false;
   }
   async recordTrack(audioTrack: AudioTrack) {
-    const startTime = this.isRunning ? this.getNextLoopStart() : this.start();
+    const startTime = this.isRunning
+      ? this.getNextLoopStart()
+      : this.playAll(audioTrack);
     this.isRecording = true;
     await audioTrack.record(startTime, this.loopInfo.loopLength, this.latency);
     this.isRecording = false;
@@ -166,23 +174,21 @@ export class LoopStation {
         buffer: undefined,
         gain: 1,
         pan: 0,
-        pitch: 0,
+        sliceMs: 0,
         reversed: false,
       };
-      if (audioTrack.buffer) {
+      function getBuffer(buffer: AudioBuffer) {
         const data = [];
-        for (
-          let channel = 0;
-          channel < audioTrack.buffer.numberOfChannels;
-          channel++
-        ) {
-          data.push(Array.from(audioTrack.buffer.getChannelData(channel)));
+        for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+          data.push(Array.from(buffer.getChannelData(channel)));
         }
-        file.buffer = data;
-
+        return data;
+      }
+      if (audioTrack.originalBuffer) {
+        file.buffer = getBuffer(audioTrack.originalBuffer);
         file.gain = audioTrack.gain.gain.value;
         file.pan = audioTrack.pan.pan.value;
-        file.pitch = audioTrack.pitch;
+        file.sliceMs = audioTrack.sliceMs;
         file.reversed = audioTrack.reversed;
       }
       return file;
@@ -218,12 +224,16 @@ export class LoopStation {
         for (let channel = 0; channel < floatData.length; channel++) {
           buffer.copyToChannel(floatData[channel], channel);
         }
+        newAudioTrack.originalBuffer = buffer;
         newAudioTrack.buffer = buffer;
       }
 
-      newAudioTrack.changeGain(storedAudioTrack.gain);
-      newAudioTrack.changePan(storedAudioTrack.pan);
-      newAudioTrack.changePitch(storedAudioTrack.pitch / 100);
+      if (storedAudioTrack.gain)
+        newAudioTrack.changeGain(storedAudioTrack.gain);
+      if (storedAudioTrack.pan) newAudioTrack.changePan(storedAudioTrack.pan);
+      if (storedAudioTrack.sliceMs)
+        newAudioTrack.changeSlice(storedAudioTrack.sliceMs);
+      if (storedAudioTrack.reversed) newAudioTrack.changeReverse();
       newAudioTrack.reversed = storedAudioTrack.reversed;
 
       return newAudioTrack;

@@ -1,15 +1,20 @@
 import Queue from 'yocto-queue';
+
 export class AudioTrack {
   id: number;
   audioContext: AudioContext;
   inputStream: MediaStream;
   buffer: AudioBuffer | undefined;
+  originalBuffer: AudioBuffer | undefined;
+  sliceMs: number;
   gain: GainNode;
   pan: StereoPannerNode;
-  pitch: number;
   reversed: boolean;
   sourceQueue: Queue<AudioBufferSourceNode>;
   intervalId: ReturnType<typeof setInterval> | null;
+  startTime: number;
+  loopLength: number;
+  nextLoopStart: number;
   constructor(
     id: number,
     audioContext: AudioContext,
@@ -22,10 +27,13 @@ export class AudioTrack {
     this.pan = audioContext.createStereoPanner();
     this.gain.connect(this.pan);
     this.pan.connect(audioContext.destination);
-    this.pitch = 0;
+    this.sliceMs = 0;
     this.reversed = false;
     this.sourceQueue = new Queue();
     this.intervalId = null;
+    this.startTime = 0;
+    this.loopLength = 0;
+    this.nextLoopStart = 0;
   }
   removeBuffer() {
     this.stop();
@@ -43,6 +51,9 @@ export class AudioTrack {
   }
   play(startTime: number, loopLength: number, nextLoopStart: number) {
     if (!this.buffer) return;
+    this.startTime = startTime;
+    this.loopLength = loopLength;
+    this.nextLoopStart = nextLoopStart;
     this.scheduleSingle(startTime, nextLoopStart);
     this.scheduleLoop(nextLoopStart, loopLength);
   }
@@ -86,7 +97,10 @@ export class AudioTrack {
           loopLength,
           audio,
         );
+        this.originalBuffer = newBuffer;
         this.buffer = newBuffer;
+        this.sliceMs = 0;
+        this.reversed = false;
         res(newBuffer);
       });
     });
@@ -102,7 +116,7 @@ export class AudioTrack {
       source.addEventListener('ended', () => this.removeFinishedSource(), {
         once: true,
       });
-
+      this.nextLoopStart = nextLoopStart;
       source.start(nextLoopStart);
       this.sourceQueue.enqueue(source);
       nextLoopStart += loopLength;
@@ -147,6 +161,28 @@ export class AudioTrack {
     }
     return newBuffer;
   }
+  sliceLeft(offset: number, length: number, buffer: AudioBuffer) {
+    const data: Float32Array[] = [];
+    const sampleRate = this.audioContext.sampleRate;
+    const startSample = Math.abs(offset * sampleRate);
+    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+      const channelData = buffer.getChannelData(channel);
+      const newData = new Float32Array(channelData.length).fill(0);
+      for (let i = startSample, j = 0; i < channelData.length; i++, j++) {
+        newData[i] = channelData[j];
+      }
+      data.push(newData);
+    }
+    const newBuffer = this.audioContext.createBuffer(
+      buffer.numberOfChannels,
+      Math.floor(length * sampleRate), // TODO: Check length and end parts of recordings
+      sampleRate,
+    );
+    for (let channel = 0; channel < data.length; channel++) {
+      newBuffer.copyToChannel(data[channel], channel);
+    }
+    return newBuffer;
+  }
   changePan(val: number) {
     // -1 is panned hard left, 1 is panned hard right, 0 is center pan
     if (val < -1 || val > 1) {
@@ -157,13 +193,27 @@ export class AudioTrack {
   changeGain(val: number) {
     this.gain.gain.value = val;
   }
-  changePitch(semitones: number) {
-    if (semitones < -12 || semitones > 12) {
-      throw Error('Number of semitones must be within -12 and 12');
+  changeSlice(val: number) {
+    if (!this.originalBuffer) return;
+    if (val >= 0) {
+      this.buffer = this.slice(
+        val / 1000,
+        this.loopLength,
+        this.originalBuffer,
+      );
+      if (this.reversed) this.buffer = this.reversedBuffer();
+    } else {
+      this.buffer = this.sliceLeft(
+        val / 1000,
+        this.loopLength,
+        this.originalBuffer,
+      );
+      if (this.reversed) this.buffer = this.reversedBuffer();
     }
-    this.pitch = semitones;
+    this.sliceMs = val;
   }
   changeReverse() {
+    if (!this.buffer) return;
     this.reversed = !this.reversed;
     this.buffer = this.reversedBuffer();
   }

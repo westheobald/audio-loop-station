@@ -12,6 +12,8 @@ export default function TrackSettingsModal({
 }) {
   const { loopStation } = useLoop();
   const [pan, setPan] = useState(+track.pan.pan.value * 100);
+  const [slice, setSlice] = useState(+track.sliceMs);
+  const trackLength = track.buffer?.duration ? track.buffer.duration * 1000 : 0;
   if (!loopStation) return null;
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70'>
@@ -21,17 +23,28 @@ export default function TrackSettingsModal({
         </h2>
 
         <div className='flex flex-col gap-2'>
-          <label className='text-sm'>Pitch (semitones)</label>
+          <label className='text-sm'>Slice: {slice}ms</label>
           <input
             type='range'
-            min={-12}
-            max={12}
+            min={-trackLength}
+            max={trackLength}
             step={1}
-            defaultValue={track.pitch / 100}
-            onChange={(e) => track.changePitch(+e.target.value)}
+            value={slice}
+            onChange={(e) => {
+              track.changeSlice(+e.target.value);
+              setSlice(+e.target.value);
+              if (loopStation.isRunning) {
+                track.stop();
+                track.play(
+                  track.audioContext.currentTime,
+                  track.loopLength,
+                  track.nextLoopStart,
+                );
+              }
+            }}
           />
 
-          <label className='text-sm'>Pan</label>
+          <label className='text-sm'>Pan: {pan}</label>
           <input
             type='range'
             min={-100}
