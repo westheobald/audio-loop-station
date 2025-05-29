@@ -15,7 +15,7 @@ export default function LatencyTest() {
   function init() {
     if (!AudioContext) throw Error('');
     const audioContxt = new AudioContext();
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+    navigator.mediaDevices.getUserMedia({  }).then((stream) => {
       setLoopStation(new LoopStation(audioContxt, stream));
       setLatencyTrack(new LatencyCorrection(-1, audioContxt, stream));
     });
@@ -61,7 +61,6 @@ export default function LatencyTest() {
             loopStation.getNextLoopStart(),
           );
           loopStation.latency = +e.target.value;
-          console.log(loopStation);
         }}
       />
     </div>

@@ -5,10 +5,16 @@ export class AudioTrack {
   audioContext: AudioContext;
   inputStream: MediaStream;
   buffer: AudioBuffer | undefined;
+  originalBuffer: AudioBuffer | undefined;
+  sliceMs: number;
   gain: GainNode;
-  pan: PannerNode;
+  pan: StereoPannerNode;
+  reversed: boolean;
   sourceQueue: Queue<AudioBufferSourceNode>;
   intervalId: ReturnType<typeof setInterval> | null;
+  startTime: number;
+  loopLength: number;
+  nextLoopStart: number;
   constructor(
     id: number,
     audioContext: AudioContext,
@@ -18,11 +24,20 @@ export class AudioTrack {
     this.audioContext = audioContext;
     this.inputStream = inputStream;
     this.gain = audioContext.createGain();
-    this.pan = audioContext.createPanner();
+    this.pan = audioContext.createStereoPanner();
     this.gain.connect(this.pan);
     this.pan.connect(audioContext.destination);
+    this.sliceMs = 0;
+    this.reversed = false;
     this.sourceQueue = new Queue();
     this.intervalId = null;
+    this.startTime = 0;
+    this.loopLength = 0;
+    this.nextLoopStart = 0;
+  }
+  removeBuffer() {
+    this.stop();
+    this.buffer = undefined;
   }
   updateBuffer(buffer: AudioBuffer) {
     this.buffer = buffer;
@@ -35,6 +50,10 @@ export class AudioTrack {
     return source;
   }
   play(startTime: number, loopLength: number, nextLoopStart: number) {
+    if (!this.buffer) return;
+    this.startTime = startTime;
+    this.loopLength = loopLength;
+    this.nextLoopStart = nextLoopStart;
     this.scheduleSingle(startTime, nextLoopStart);
     this.scheduleLoop(nextLoopStart, loopLength);
   }
@@ -42,7 +61,14 @@ export class AudioTrack {
     const previousGain = this.gain.gain.value;
     this.gain.gain.value = 0;
     if (this.intervalId) clearInterval(this.intervalId);
-    for (const node of this.sourceQueue.drain()) node.disconnect();
+    for (const node of this.sourceQueue.drain()) {
+      try {
+        node.stop(); // <--- make sure this is here
+      } catch (e) {
+        console.warn(`Node stopped: ${e}`);
+      }
+      node.disconnect();
+    }
     this.intervalId = null;
     this.gain.gain.value = previousGain;
   }
@@ -66,17 +92,15 @@ export class AudioTrack {
       recorder.addEventListener('dataavailable', async (ev) => {
         const array = await ev.data.arrayBuffer();
         const audio = await this.audioContext.decodeAudioData(array);
-        console.log(audio);
-        console.log(
-          `Recording finished. Wait Time: ${waitTime}, LoopLength: ${loopLength}, Latency: ${latency}`,
-        );
         const newBuffer = this.slice(
           waitTime + latency / 1000,
           loopLength,
           audio,
         );
-        console.log(newBuffer);
+        this.originalBuffer = newBuffer;
         this.buffer = newBuffer;
+        this.sliceMs = 0;
+        this.reversed = false;
         res(newBuffer);
       });
     });
@@ -89,15 +113,13 @@ export class AudioTrack {
     let nextLoopStart = startTime;
     const loop = () => {
       const source = this.createSourceNode();
+      source.addEventListener('ended', () => this.removeFinishedSource(), {
+        once: true,
+      });
+      this.nextLoopStart = nextLoopStart;
       source.start(nextLoopStart);
       this.sourceQueue.enqueue(source);
       nextLoopStart += loopLength;
-
-      source.addEventListener(
-        'ended',
-        () => this.removeFinishedSource(source),
-        { once: true },
-      );
     };
 
     loop();
@@ -110,19 +132,15 @@ export class AudioTrack {
     let offset = source.buffer.duration - (nextLoopStart - startTime);
     if (offset < 0) offset = 0; // protect against floating point math
 
-    source.start(startTime, offset);
-    this.sourceQueue.enqueue(source);
-    source.addEventListener('ended', () => this.removeFinishedSource(source), {
+    source.addEventListener('ended', () => this.removeFinishedSource(), {
       once: true,
     });
+
+    source.start(startTime, offset);
+    this.sourceQueue.enqueue(source);
   }
-  removeFinishedSource(source: AudioBufferSourceNode) {
-    const finishedSource = this.sourceQueue.dequeue();
-    if (finishedSource !== source) {
-      throw Error(
-        `Source queue error for track: ${this.id}. Dequeue source does not match.`,
-      );
-    }
+  removeFinishedSource() {
+    this.sourceQueue.dequeue();
   }
   slice(offset: number, length: number, buffer: AudioBuffer) {
     // offset in seconds
@@ -139,6 +157,81 @@ export class AudioTrack {
       sampleRate,
     );
     for (let channel = 0; channel < data.length; channel++) {
+      newBuffer.copyToChannel(data[channel], channel);
+    }
+    return newBuffer;
+  }
+  sliceLeft(offset: number, length: number, buffer: AudioBuffer) {
+    const data: Float32Array[] = [];
+    const sampleRate = this.audioContext.sampleRate;
+    const startSample = Math.abs(offset * sampleRate);
+    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+      const channelData = buffer.getChannelData(channel);
+      const newData = new Float32Array(channelData.length).fill(0);
+      for (let i = startSample, j = 0; i < channelData.length; i++, j++) {
+        newData[i] = channelData[j];
+      }
+      data.push(newData);
+    }
+    const newBuffer = this.audioContext.createBuffer(
+      buffer.numberOfChannels,
+      Math.floor(length * sampleRate), // TODO: Check length and end parts of recordings
+      sampleRate,
+    );
+    for (let channel = 0; channel < data.length; channel++) {
+      newBuffer.copyToChannel(data[channel], channel);
+    }
+    return newBuffer;
+  }
+  changePan(val: number) {
+    // -1 is panned hard left, 1 is panned hard right, 0 is center pan
+    if (val < -1 || val > 1) {
+      throw Error('Pan value must be within -1 an 1 (inclusive).');
+    }
+    this.pan.pan.value = val;
+  }
+  changeGain(val: number) {
+    this.gain.gain.value = val;
+  }
+  changeSlice(val: number) {
+    if (!this.originalBuffer) return;
+    if (val >= 0) {
+      this.buffer = this.slice(
+        val / 1000,
+        this.loopLength,
+        this.originalBuffer,
+      );
+      if (this.reversed) this.buffer = this.reversedBuffer();
+    } else {
+      this.buffer = this.sliceLeft(
+        val / 1000,
+        this.loopLength,
+        this.originalBuffer,
+      );
+      if (this.reversed) this.buffer = this.reversedBuffer();
+    }
+    this.sliceMs = val;
+  }
+  changeReverse() {
+    if (!this.buffer) return;
+    this.reversed = !this.reversed;
+    this.buffer = this.reversedBuffer();
+  }
+  reversedBuffer() {
+    if (!this.buffer) {
+      throw Error(`No buffer found for track ${this.id} to reverse`);
+    }
+    const data = [];
+    for (let channel = 0; channel < this.buffer.numberOfChannels; channel++) {
+      const audio = this.buffer.getChannelData(channel);
+      data.push(audio.reverse());
+    }
+    const newBuffer = this.audioContext.createBuffer(
+      this.buffer.numberOfChannels,
+      this.buffer.length,
+      this.buffer.sampleRate,
+    );
+    for (let channel = 0; channel < this.buffer.numberOfChannels; channel++) {
       newBuffer.copyToChannel(data[channel], channel);
     }
     return newBuffer;
