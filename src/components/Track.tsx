@@ -74,12 +74,14 @@ export default function Track({
         >
           {isRecording ? 'Recording...' : 'Record'}
         </button>
-        <button
-          onClick={() => setShowSettings(true)}
-          className='text-xs mt-1 text-white hover:underline'
-        >
-          Settings
-        </button>
+        {track.buffer && (
+          <button
+            onClick={() => setShowSettings(true)}
+            className='text-xs mt-1 text-white hover:underline'
+          >
+            Settings
+          </button>
+        )}
       </div>
       {showSettings && (
         <TrackSettingsModal

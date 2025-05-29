@@ -23,7 +23,7 @@ export default function TrackSettingsModal({
         </h2>
 
         <div className='flex flex-col gap-2'>
-          <label className='text-sm'>Slice: {slice}ms</label>
+          <label className='text-sm'>Slip: {slice}ms</label>
           <input
             type='range'
             min={-trackLength}
@@ -59,7 +59,10 @@ export default function TrackSettingsModal({
 
           <button
             className='border px-4 py-2 rounded hover:bg-accent hover:text-black transition'
-            onClick={() => loopStation.changeReverse(track)}
+            onClick={() => {
+              if (loopStation.isRunning) loopStation.changeReverse(track);
+              else track.changeReverse();
+            }}
           >
             Reverse Audio
           </button>
