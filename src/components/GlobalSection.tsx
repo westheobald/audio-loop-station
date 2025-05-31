@@ -1,7 +1,7 @@
 'use client';
 import { useLoop } from '@/contexts/LoopContext';
 import { ChangeEvent, useState } from 'react';
-
+import { ArrowDownToLine, Play, Pause, AlarmClockCheck, Drum } from "lucide-react";
 export default function GlobalSection() {
   const {
     loopStation,
@@ -17,6 +17,7 @@ export default function GlobalSection() {
   } = useLoop();
   const [isMetronome, setIsMetronome] = useState(true);
   const [isCountIn, setIsCountIn] = useState(true);
+  const [selectedFileName, setSelectedFileName] = useState("");
 
   if (!isInitialized || !loopStation) return null;
 
@@ -55,9 +56,9 @@ export default function GlobalSection() {
             loopStation.isMetronome = !isMetronome;
             setIsMetronome(!isMetronome);
           }}
-          className='border rounded py-1 text-sm hover:bg-accent hover:text-black transition'
+          className='border rounded p-2 flex justify-center items-center hover:bg-neutral hover:text-blue-400 transition'
         >
-          {isMetronome ? 'Disable Metronome' : 'Enable Metronome'}
+          <Drum className='w-5 h-5' color={isMetronome ? "#ffffff" : "#7a7a7a"} />
         </button>
         <button
           disabled={isPlaying}
@@ -66,9 +67,11 @@ export default function GlobalSection() {
             loopStation.isCountIn = !isCountIn;
             setIsCountIn(!isCountIn);
           }}
-          className='border rounded py-1 text-sm hover:bg-accent hover:text-black transition'
+          className='border rounded p-2 flex justify-center items-center hover:bg-neutral hover:text-blue-400 transition'
+        
         >
-          {isCountIn ? 'Disable Count In' : 'Enable Count In'}
+          <AlarmClockCheck className='w-5 h-5' color={isCountIn ? "#ffffff" : "#7a7a7a"} />
+
         </button>
 
         {/* Controls loop playback */}
@@ -81,14 +84,40 @@ export default function GlobalSection() {
             }
             setIsPlaying(!isPlaying);
           }}
-          className='border rounded py-1 text-sm hover:bg-accent hover:text-black transition'
+          className='border rounded p-2 flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
         >
-          {isPlaying ? 'Stop' : 'Play'}
+          {isPlaying ? <Pause className='w-5 h-5' /> : <Play className='w-5 h-5'/>}
         </button>
-        <button onClick={() => loopStation.store()}>Store Loop</button>
-        <label>Load Loop</label>
-        <input type='file' onChange={handleLoad} />
+
+        <button 
+        onClick={() => loopStation.store()}
+        className='border rounded p-2 flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
+        >
+        <ArrowDownToLine className='w-5 h-5'/>
+        </button>
       </div>
+      <div className="flex flex-col items-center justify-center mt-4">
+          <button
+            onClick={() => document.getElementById('fileInput')?.click()}
+            className="border px-4 py-2 rounded text-sm hover:bg-accent hover:text-blue-400 transition"
+          >
+            Choose File
+          </button>
+          <span className="mt-2 text-xs text-neutral-400">
+            {selectedFileName || "No file chosen"}
+          </span>
+        </div>
+        <input
+          id="fileInput"
+          type="file"
+          onChange={(e) => {
+            handleLoad(e);
+            if (e.target.files?.length) {
+              setSelectedFileName(e.target.files[0].name);
+            }
+          }}
+          className="hidden"
+        />
     </section>
   );
 }

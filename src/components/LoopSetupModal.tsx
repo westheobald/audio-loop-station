@@ -17,6 +17,7 @@ export default function LoopSetupModal() {
     init,
     loopStation,
     countInLength,
+    setCountInLength
   } = useLoop();
 
   const [show, setShow] = useState(false);
@@ -83,6 +84,25 @@ export default function LoopSetupModal() {
               decrementButtonIcon='pi pi-minus'
             />
           </div>
+        </div>
+
+        <div className='flex flex-col items-center gap-2'>
+          <label className='text-sm'>Count In</label>
+          <InputNumber
+            min={1}
+            max={2}
+            value={countInLength}
+            onValueChange={(e) =>
+              typeof e.value === 'number' && setCountInLength(e.value)
+            }
+            showButtons
+            buttonLayout='horizontal'
+            style={{ width: '16rem' }}
+            decrementButtonClassName='p-button-secondary p-button-sm'
+            incrementButtonClassName='p-button-secondary p-button-sm'
+            incrementButtonIcon='pi pi-plus'
+            decrementButtonIcon='pi pi-minus'
+          />
         </div>
 
         <div className='flex flex-col items-center gap-4'>
