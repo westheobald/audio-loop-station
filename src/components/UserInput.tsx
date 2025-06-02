@@ -1,12 +1,12 @@
 'use client';
 
-import { InputNumber } from 'primereact/inputnumber';
 import { useLoop } from '@/contexts/LoopContext';
 import { useState } from 'react';
 import LoopSetupModal from '@/components/LoopSetupModal';
+import { Wrench } from 'lucide-react';
 
 export default function UserInput() {
-  const { bpm, beatsPerBar, numberOfBars, countInLength, setCountInLength } =
+  const { bpm, beatsPerBar, numberOfBars, countInLength } =
     useLoop();
   const [showModal, setShowModal] = useState(false);
 
@@ -28,33 +28,20 @@ export default function UserInput() {
           <span className='text-xs text-white'>Number of Bars</span>
           <span className='text-xl font-semibold'>{numberOfBars}</span>
         </div>
-      </div>
 
-      <div className='flex flex-col items-center gap-2 mt-8'>
-        <label className='text-sm text-white'>Count In</label>
-        <InputNumber
-          min={1}
-          max={2}
-          value={countInLength}
-          onValueChange={(e) =>
-            typeof e.value === 'number' && setCountInLength(e.value)
-          }
-          showButtons
-          buttonLayout='vertical'
-          style={{ width: '4rem' }}
-          decrementButtonClassName='p-button-secondary p-button-sm'
-          incrementButtonClassName='p-button-secondary p-button-sm'
-          incrementButtonIcon='pi pi-plus'
-          decrementButtonIcon='pi pi-minus'
-        />
+        <div className='flex flex-col items-center gap-1'>
+          <span className='text-sm text-white'>Count In</span>
+          <span className='text-xl font-semibold'>{countInLength}</span>
+        </div>
       </div>
 
       {/* Opens modal */}
       <button
-        className='mt-3 border px-4 py-2 rounded hover:bg-accent hover:text-black transition'
+        data-tip="Edit"
+        className='tooltip tooltip-bottom mt-3 border px-4 py-2 rounded hover:bg-neutral hover:text-blue-400 transition'
         onClick={() => setShowModal(true)}
       >
-        Edit
+        <Wrench />
       </button>
 
       {showModal && <LoopSetupModal />}

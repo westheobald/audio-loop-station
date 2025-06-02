@@ -6,6 +6,7 @@ import Led from './Led';
 import { AudioTrack } from '@/audio/audio-track';
 import TrackSettingsModal from './TrackSettingsModal';
 import { useLoop } from '@/contexts/LoopContext';
+import { Settings } from "lucide-react";
 
 export default function Track({
   index,
@@ -62,24 +63,29 @@ export default function Track({
             }
             setMuted(!muted);
           }}
-          className={`w-8 h-8 text-sm font-medium rounded shadow border
-                    ${muted ? 'bg-ledRed text-white' : 'bg-neutral-300 text-black'}`}
+          className={`w-8 h-8 text-sm font-medium rounded shadow border hover:bg-white
+                    ${muted ? 'bg-black text-white' : 'bg-neutral-300 text-black'}`}
         >
           {index}
         </button>
         <button
           onClick={handleRecord}
           disabled={isRecording}
-          className='text-xs text-white border rounded px-2 py-1 hover:bg-accent hover:text-black transition disabled:opacity-50'
+            className={`w-8 h-8 flex items-center justify-center rounded shadow bg-neutral-300 hover:bg-white my-2 ${
+              isRecording ? "bg-red-600 text-white" : "bg-neutral-300 text-black"
+            }`}
         >
-          {isRecording ? 'Recording...' : 'Record'}
+          <span className="w-3 h-3 rounded-full bg-red-600"></span>
+          
         </button>
         {track.buffer && (
           <button
             onClick={() => setShowSettings(true)}
-            className='text-xs mt-1 text-white hover:underline'
+            className="w-8 h-8 flex items-center justify-center rounded shadow bg-neutral-300 hover:bg-white my-1"
+            aria-label="Settings"
+            title="Settings"
           >
-            Settings
+            <Settings className="w-4 h-4" color="#000000" />
           </button>
         )}
       </div>

@@ -58,7 +58,7 @@ export default function TrackSettingsModal({
           />
 
           <button
-            className='border px-4 py-2 rounded hover:bg-accent hover:text-black transition'
+            className='border px-4 py-2 rounded hover:bg-neutral hover:text-blue-400 transition'
             onClick={() => {
               if (loopStation.isRunning) loopStation.changeReverse(track);
               else track.changeReverse();
@@ -68,7 +68,7 @@ export default function TrackSettingsModal({
           </button>
 
           <button
-            className='border px-4 py-2 rounded hover:bg-accent hover:text-black transition'
+            className='border px-4 py-2 rounded hover:bg-neutral hover:text-blue-400 transition'
             onClick={onClose}
           >
             Close

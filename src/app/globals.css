@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@plugin "daisyui";
+
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -11,4 +13,11 @@
   .bg-ledRed {
     background-color: #ff6060;
   }
+}
+
+.p-slider .p-slider-handle {
+  background-color: #64b7f3;
+  border: 2px solid white;
+  width: 2rem;
+  margin-left: -1rem;
 }
