@@ -1,7 +1,13 @@
 'use client';
 import { useLoop } from '@/contexts/LoopContext';
 import { ChangeEvent, useState } from 'react';
-import { ArrowDownToLine, Play, Pause, AlarmClockCheck, Drum } from "lucide-react";
+import {
+  ArrowDownToLine,
+  Play,
+  Pause,
+  AlarmClockCheck,
+  Drum,
+} from 'lucide-react';
 export default function GlobalSection() {
   const {
     loopStation,
@@ -17,7 +23,7 @@ export default function GlobalSection() {
   } = useLoop();
   const [isMetronome, setIsMetronome] = useState(true);
   const [isCountIn, setIsCountIn] = useState(true);
-  const [selectedFileName, setSelectedFileName] = useState("");
+  const [selectedFileName, setSelectedFileName] = useState('');
 
   if (!isInitialized || !loopStation) return null;
 
@@ -48,7 +54,7 @@ export default function GlobalSection() {
       <div className='grid grid-cols-2 gap-2'>
         {/* Controls metronome */}
         <button
-          data-tip={isMetronome ? "Disable Metronome" : "Enable Metronome"}
+          data-tip={isMetronome ? 'Disable Metronome' : 'Enable Metronome'}
           onClick={() => {
             if (!loopStation) return;
             if (isPlaying && loopStation.isMetronome) {
@@ -58,13 +64,15 @@ export default function GlobalSection() {
             setIsMetronome(!isMetronome);
           }}
           className='tooltip border rounded p-2 w-[7rem] flex justify-center items-center hover:bg-neutral hover:text-blue-400 transition'
-          
         >
-          <Drum className='w-5 h-5' color={isMetronome ? "#ffffff" : "#7a7a7a"} />
+          <Drum
+            className='w-5 h-5'
+            color={isMetronome ? '#ffffff' : '#7a7a7a'}
+          />
         </button>
-        
+
         <button
-          data-tip={isCountIn ? "Disable Count-In" : "Enable Count-In"}
+          data-tip={isCountIn ? 'Disable Count-In' : 'Enable Count-In'}
           disabled={isPlaying}
           onClick={() => {
             if (!loopStation) return;
@@ -72,15 +80,16 @@ export default function GlobalSection() {
             setIsCountIn(!isCountIn);
           }}
           className='tooltip border rounded p-2 w-[7rem] flex justify-center items-center hover:bg-neutral hover:text-blue-400 transition'
-        
         >
-          <AlarmClockCheck className='w-5 h-5' color={isCountIn ? "#ffffff" : "#7a7a7a"} />
-
+          <AlarmClockCheck
+            className='w-5 h-5'
+            color={isCountIn ? '#ffffff' : '#7a7a7a'}
+          />
         </button>
 
         {/* Controls loop playback */}
         <button
-          data-tip={isPlaying ? "Pause" : "Play"}
+          data-tip={isPlaying ? 'Pause' : 'Play'}
           onClick={() => {
             if (!isPlaying) {
               loopStation.playAll();
@@ -91,39 +100,43 @@ export default function GlobalSection() {
           }}
           className='tooltip tooltip-bottom border rounded p-2 w-[7rem] flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
         >
-          {isPlaying ? <Pause className='w-5 h-5' /> : <Play className='w-5 h-5'/>}
+          {isPlaying ? (
+            <Pause className='w-5 h-5' />
+          ) : (
+            <Play className='w-5 h-5' />
+          )}
         </button>
 
         <button
-        data-tip="Save File" 
-        onClick={() => loopStation.store()}
-        className='tooltip tooltip-bottom border rounded p-2 w-[7rem] flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
+          data-tip='Save File'
+          onClick={() => loopStation.store()}
+          className='tooltip tooltip-bottom border rounded p-2 w-[7rem] flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
         >
-        <ArrowDownToLine className='w-5 h-5'/>
+          <ArrowDownToLine className='w-5 h-5' />
         </button>
       </div>
-      <div className="flex flex-col items-center justify-center mt-10">
-          <button
-            onClick={() => document.getElementById('fileInput')?.click()}
-            className="border px-4 py-2 rounded text-sm hover:bg-neutral hover:text-blue-400 transition"
-          >
-            Choose File
-          </button>
-          <span className="mt-2 text-xs text-neutral-400">
-            {selectedFileName || "No file chosen"}
-          </span>
-        </div>
-        <input
-          id="fileInput"
-          type="file"
-          onChange={(e) => {
-            handleLoad(e);
-            if (e.target.files?.length) {
-              setSelectedFileName(e.target.files[0].name);
-            }
-          }}
-          className="hidden"
-        />
+      <div className='flex flex-col items-center justify-center mt-10'>
+        <button
+          onClick={() => document.getElementById('fileInput')?.click()}
+          className='border px-4 py-2 rounded text-sm hover:bg-neutral hover:text-blue-400 transition'
+        >
+          Import Loop
+        </button>
+        <span className='mt-2 text-xs text-neutral-400'>
+          {selectedFileName || 'No file chosen'}
+        </span>
+      </div>
+      <input
+        id='fileInput'
+        type='file'
+        onChange={(e) => {
+          handleLoad(e);
+          if (e.target.files?.length) {
+            setSelectedFileName(e.target.files[0].name);
+          }
+        }}
+        className='hidden'
+      />
     </section>
   );
 }
