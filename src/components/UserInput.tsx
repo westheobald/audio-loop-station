@@ -37,7 +37,8 @@ export default function UserInput() {
 
       {/* Opens modal */}
       <button
-        className='mt-3 border px-4 py-2 rounded hover:bg-accent hover:text-blue-400 transition'
+        data-tip="Edit"
+        className='tooltip tooltip-bottom mt-3 border px-4 py-2 rounded hover:bg-neutral hover:text-blue-400 transition'
         onClick={() => setShowModal(true)}
       >
         <Wrench />

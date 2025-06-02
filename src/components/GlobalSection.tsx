@@ -48,6 +48,7 @@ export default function GlobalSection() {
       <div className='grid grid-cols-2 gap-2'>
         {/* Controls metronome */}
         <button
+          data-tip={isMetronome ? "Disable Metronome" : "Enable Metronome"}
           onClick={() => {
             if (!loopStation) return;
             if (isPlaying && loopStation.isMetronome) {
@@ -56,18 +57,21 @@ export default function GlobalSection() {
             loopStation.isMetronome = !isMetronome;
             setIsMetronome(!isMetronome);
           }}
-          className='border rounded p-2 flex justify-center items-center hover:bg-neutral hover:text-blue-400 transition'
+          className='tooltip border rounded p-2 w-[7rem] flex justify-center items-center hover:bg-neutral hover:text-blue-400 transition'
+          
         >
           <Drum className='w-5 h-5' color={isMetronome ? "#ffffff" : "#7a7a7a"} />
         </button>
+        
         <button
+          data-tip={isCountIn ? "Disable Count-In" : "Enable Count-In"}
           disabled={isPlaying}
           onClick={() => {
             if (!loopStation) return;
             loopStation.isCountIn = !isCountIn;
             setIsCountIn(!isCountIn);
           }}
-          className='border rounded p-2 flex justify-center items-center hover:bg-neutral hover:text-blue-400 transition'
+          className='tooltip border rounded p-2 w-[7rem] flex justify-center items-center hover:bg-neutral hover:text-blue-400 transition'
         
         >
           <AlarmClockCheck className='w-5 h-5' color={isCountIn ? "#ffffff" : "#7a7a7a"} />
@@ -76,6 +80,7 @@ export default function GlobalSection() {
 
         {/* Controls loop playback */}
         <button
+          data-tip={isPlaying ? "Pause" : "Play"}
           onClick={() => {
             if (!isPlaying) {
               loopStation.playAll();
@@ -84,22 +89,23 @@ export default function GlobalSection() {
             }
             setIsPlaying(!isPlaying);
           }}
-          className='border rounded p-2 flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
+          className='tooltip tooltip-bottom border rounded p-2 w-[7rem] flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
         >
           {isPlaying ? <Pause className='w-5 h-5' /> : <Play className='w-5 h-5'/>}
         </button>
 
-        <button 
+        <button
+        data-tip="Save File" 
         onClick={() => loopStation.store()}
-        className='border rounded p-2 flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
+        className='tooltip tooltip-bottom border rounded p-2 w-[7rem] flex justify-center items-center text-sm hover:bg-neutral hover:text-blue-400 transition'
         >
         <ArrowDownToLine className='w-5 h-5'/>
         </button>
       </div>
-      <div className="flex flex-col items-center justify-center mt-4">
+      <div className="flex flex-col items-center justify-center mt-10">
           <button
             onClick={() => document.getElementById('fileInput')?.click()}
-            className="border px-4 py-2 rounded text-sm hover:bg-accent hover:text-blue-400 transition"
+            className="border px-4 py-2 rounded text-sm hover:bg-neutral hover:text-blue-400 transition"
           >
             Choose File
           </button>
