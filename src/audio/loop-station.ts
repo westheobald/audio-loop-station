@@ -40,6 +40,7 @@ export class LoopStation {
       sampleRate: audioContext.sampleRate,
     });
     this.metronome = new Metronome(audioContext, inputStream, this.loopInfo);
+    this.metronome.gain.gain.value = 0.5;
 
     this.latency = 0;
 
@@ -82,15 +83,12 @@ export class LoopStation {
       this.inputStream,
       loopInfo,
     );
+    metronome.gain.gain.value = 0.5;
     for (const audioTrack of this.audioTracks) {
       audioTrack.removeBuffer();
     }
     this.loopInfo = loopInfo;
     this.metronome = metronome;
-    // NOTE: If implementing audio track tempo changes, alter playback speeds
-    // to match new loopInfo
-    // Otherwise make changes go on some kind of confirm that will delete the
-    // already recorder tracks
   }
   start() {
     this.startTime = this.audioContext.currentTime;
@@ -149,7 +147,6 @@ export class LoopStation {
     audioTrack.stop();
   }
   store() {
-    // TODO: Gzip
     const fileObject = {
       loopInfo: this.loopInfo,
       audioTracks: this.audioTracks.map((audioTrack) =>
@@ -195,7 +192,6 @@ export class LoopStation {
     }
   }
   load(file: string) {
-    // TODO: Gunzip
     const json: storedLoop = JSON.parse(file);
     this.stopAll();
     this.updateLooper(
