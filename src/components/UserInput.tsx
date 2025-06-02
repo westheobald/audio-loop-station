@@ -6,7 +6,7 @@ import LoopSetupModal from '@/components/LoopSetupModal';
 import { Wrench } from 'lucide-react';
 
 export default function UserInput() {
-  const { bpm, beatsPerBar, numberOfBars, countInLength, setCountInLength } =
+  const { bpm, beatsPerBar, numberOfBars, countInLength } =
     useLoop();
   const [showModal, setShowModal] = useState(false);
 
